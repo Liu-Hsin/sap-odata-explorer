@@ -2,22 +2,22 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ODataError {
-    #[error("HTTP error: {}", describe_http_error(.0))]
+    #[error("HTTP 请求错误：{}", describe_http_error(.0))]
     Http(#[from] reqwest::Error),
 
-    #[error("metadata parse error: {0}")]
+    #[error("元数据解析失败：{0}")]
     MetadataParse(String),
 
-    #[error("CSRF token fetch failed: {0}")]
+    #[error("获取 CSRF 令牌失败：{0}")]
     CsrfFetch(String),
 
-    #[error("authentication failed: {0}")]
+    #[error("认证失败：{0}")]
     AuthFailed(String),
 
-    #[error("entity not found: {0}")]
+    #[error("未找到实体：{0}")]
     EntityNotFound(String),
 
-    #[error("service not found: {0}")]
+    #[error("未找到服务：{0}")]
     ServiceNotFound(String),
 
     /// Non-success HTTP status ("server returned 400 Bad Request …") or
@@ -27,7 +27,7 @@ pub enum ODataError {
     #[error("{0}")]
     ResponseParse(String),
 
-    #[error("invalid URL: {0}")]
+    #[error("URL 无效：{0}")]
     InvalidUrl(#[from] url::ParseError),
 }
 
@@ -47,7 +47,7 @@ fn describe_http_error(e: &reqwest::Error) -> String {
     }
     if e.is_timeout() {
         text.push_str(&format!(
-            " — no response from the server in time (set {} to raise the read timeout, 0 disables it)",
+            " ——服务器未能及时响应（设置 {} 可延长读取超时时间，设为 0 可禁用超时）",
             crate::client::READ_TIMEOUT_ENV
         ));
     }

@@ -23,33 +23,33 @@ pub(super) fn check_identity(et: &EntityType, profile: LintProfile, out: &mut Ve
         out.push(pass(
             LintCategory::Identity,
             "header_info",
-            "UI.HeaderInfo declared.".to_string(),
+            "已声明 UI.HeaderInfo。".to_string(),
         ));
     } else if !is_value_help {
         out.push(actionable(
             LintSeverity::Miss,
             LintCategory::Identity,
             "header_info",
-            "No UI.HeaderInfo — Fiori will fall back to the technical type name for titles."
+            "未声明 UI.HeaderInfo——Fiori 将使用技术类型名称作为标题。"
                 .to_string(),
             "@UI.headerInfo",
-            "Drives object-page titles and the list report's singular/plural labels.",
+            "用于对象页标题及列表报表的单数/复数名称。"
         ));
     }
     if !et.semantic_keys.is_empty() {
         out.push(pass(
             LintCategory::Identity,
             "semantic_key",
-            format!("Common.SemanticKey: {}", et.semantic_keys.join(", ")),
+            format!("Common.SemanticKey：{}", et.semantic_keys.join(", ")),
         ));
     } else if et.keys.iter().any(|k| is_uuid_like_key(k)) {
         out.push(actionable(
             LintSeverity::Warn,
             LintCategory::Identity,
             "semantic_key",
-            "Technical key looks UUID-ish but no Common.SemanticKey declared — Fiori will show the UUID.".to_string(),
+            "技术键看起来像 UUID，但未声明 Common.SemanticKey——Fiori 将显示 UUID。".to_string(),
             "@ObjectModel.semanticKey",
-            "Lets Fiori show the *business* key (e.g. Product, OrderID) instead of the technical UUID.",
+            "让 Fiori 显示业务键（例如 Product、OrderID），而不是技术 UUID。"
         ));
     }
 }
@@ -67,16 +67,16 @@ pub(super) fn check_list_report(et: &EntityType, profile: LintProfile, out: &mut
         out.push(pass(
             LintCategory::ListReport,
             "line_item",
-            format!("UI.LineItem: {} column(s) declared.", et.line_item.len()),
+            format!("UI.LineItem：已声明 {} 列。", et.line_item.len()),
         ));
     } else if !is_value_help && !is_object_page && !is_analytical {
         out.push(actionable(
             LintSeverity::Miss,
             LintCategory::ListReport,
             "line_item",
-            "No UI.LineItem — the list report will have no default columns.".to_string(),
+            "未声明 UI.LineItem——列表报表没有默认列。".to_string(),
             "@UI.lineItem",
-            "Declares which columns the list report shows by default and in what order.",
+            "声明列表报表默认显示哪些列及其顺序。"
         ));
     }
     if !et.request_at_least.is_empty() {
@@ -84,7 +84,7 @@ pub(super) fn check_list_report(et: &EntityType, profile: LintProfile, out: &mut
             LintCategory::ListReport,
             "request_at_least",
             format!(
-                "UI.PresentationVariant.RequestAtLeast: +{} support field(s).",
+                "UI.PresentationVariant.RequestAtLeast：额外包含 {} 个辅助字段。",
                 et.request_at_least.len(),
             ),
         ));
@@ -94,7 +94,7 @@ pub(super) fn check_list_report(et: &EntityType, profile: LintProfile, out: &mut
             LintCategory::ListReport,
             "sort_order",
             format!(
-                "UI.PresentationVariant.SortOrder: {} clause(s).",
+                "UI.PresentationVariant.SortOrder：已声明 {} 条排序规则。",
                 et.sort_order.len(),
             ),
         ));
@@ -114,7 +114,7 @@ pub(super) fn check_filtering(et: &EntityType, profile: LintProfile, out: &mut V
             LintCategory::Filtering,
             "selection_fields",
             format!(
-                "UI.SelectionFields: {} field(s).",
+                "UI.SelectionFields：已声明 {} 个字段。",
                 et.selection_fields.len()
             ),
         ));
@@ -123,9 +123,9 @@ pub(super) fn check_filtering(et: &EntityType, profile: LintProfile, out: &mut V
             LintSeverity::Miss,
             LintCategory::Filtering,
             "selection_fields",
-            "No UI.SelectionFields — the filter bar will be empty by default.".to_string(),
+            "未声明 UI.SelectionFields——筛选栏默认为空。".to_string(),
             "@UI.selectionField",
-            "Populates the Fiori filter bar — the properties the user sees as ready-to-filter fields.",
+            "填充 Fiori 筛选栏，指定用户可直接使用的筛选字段。"
         ));
     }
     if !et.selection_variants.is_empty() {
@@ -133,7 +133,7 @@ pub(super) fn check_filtering(et: &EntityType, profile: LintProfile, out: &mut V
             LintCategory::Filtering,
             "selection_variants",
             format!(
-                "UI.SelectionVariant: {} declared.",
+                "UI.SelectionVariant：已声明 {} 个筛选变体。",
                 et.selection_variants.len(),
             ),
         ));
@@ -160,11 +160,11 @@ pub(super) fn check_fields(et: &EntityType, out: &mut Vec<LintFinding>) {
             LintCategory::Fields,
             "unit_missing",
             format!(
-                "Decimal/amount-looking properties without Measures.Unit or ISOCurrency: {}",
+                "以下小数/金额类属性未关联 Measures.Unit 或 ISOCurrency：{}",
                 decimal_without_unit.join(", "),
             ),
             "@Semantics.amount.currencyCode / @Semantics.quantity.unitOfMeasure",
-            "Lets Fiori format the value with the right currency or unit — otherwise it's a raw decimal.",
+            "使 Fiori 能使用正确的货币或计量单位格式化数值，否则只能显示原始小数。"
         ));
     }
     let code_without_text: Vec<&str> = et
@@ -179,11 +179,11 @@ pub(super) fn check_fields(et: &EntityType, out: &mut Vec<LintFinding>) {
             LintCategory::Fields,
             "text_missing",
             format!(
-                "Code-looking properties without Common.Text: {}",
+                "以下代码类属性未关联 Common.Text：{}",
                 code_without_text.join(", "),
             ),
             "@ObjectModel.text.element",
-            "Pairs the code column with a human-readable description column (Fiori renders them together per UI.TextArrangement).",
+            "将代码列与易读的描述列关联（Fiori 会根据 UI.TextArrangement 将它们组合显示）。"
         ));
     }
 }
@@ -215,11 +215,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Filtering,
                 "selection_non_filterable",
                 format!(
-                    "UI.SelectionFields references non-filterable column(s): {}",
+                    "UI.SelectionFields 引用了不可筛选的列：{}",
                     bad.join(", "),
                 ),
                 "@Consumption.filter.hidden + @UI.selectionField consistency",
-                "Fiori will show the chip in the filter bar but the server will reject `$filter` on it — pick one.",
+                "Fiori 会在筛选栏中显示该筛选项，但服务器会拒绝对此字段使用 `$filter`；请统一配置。"
             ));
         }
     }
@@ -242,11 +242,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::ListReport,
                 "sort_non_sortable",
                 format!(
-                    "UI.PresentationVariant.SortOrder references non-sortable column(s): {}",
+                    "UI.PresentationVariant.SortOrder 引用了不可排序的列：{}",
                     bad.join(", "),
                 ),
                 "@Consumption.filter.sortable + SortOrder consistency",
-                "Server will 400 on `$orderby` — the declared default sort will never actually run.",
+                "服务器会对 `$orderby` 返回 400 错误，因此声明的默认排序无法生效。"
             ));
         }
     }
@@ -269,11 +269,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Filtering,
                 "selection_hidden",
                 format!(
-                    "UI.SelectionFields includes UI.Hidden column(s): {}",
+                    "UI.SelectionFields 包含标记为 UI.Hidden 的列：{}",
                     bad.join(", "),
                 ),
                 "@UI.hidden + @UI.selectionField consistency",
-                "Fiori would hide the column but also offer it as a filter — the two signals contradict.",
+                "Fiori 会隐藏该列，却仍将其作为筛选项提供，两项配置互相矛盾。"
             ));
         }
     }
@@ -302,11 +302,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Fields,
                 "value_list_no_out",
                 format!(
-                    "Common.ValueList without an InOut/Out parameter bound to the local property: {}",
+                    "Common.ValueList 未配置绑定到本地属性的 InOut/Out 参数：{}",
                     bad.join(", "),
                 ),
                 "@Consumption.valueHelpDefinition parameter mapping",
-                "The picker can show a list but has nowhere to write the picked value back — users can browse but not select.",
+                "值帮助弹窗可以显示列表，但没有目标属性接收所选值——用户只能浏览，无法选择。"
             ));
         }
     }
@@ -324,11 +324,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Fields,
                 "text_arrangement_lonely",
                 format!(
-                    "UI.TextArrangement declared without Common.Text on: {}",
+                    "以下属性声明了 UI.TextArrangement，但未关联 Common.Text：{}",
                     bad.join(", "),
                 ),
                 "@ObjectModel.text.element + @UI.textArrangement pair",
-                "There's nothing to arrange — the arrangement hint has no companion description column.",
+                "没有可供排列的描述文本；该显示方式提示缺少对应的描述列。"
             ));
         }
     }
@@ -360,11 +360,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Filtering,
                 "selection_variant_dead_filter",
                 format!(
-                    "UI.SelectionVariant references hidden or non-filterable column(s): {}",
+                    "UI.SelectionVariant 引用了隐藏或不可筛选的列：{}",
                     bad.join(", "),
                 ),
                 "@UI.selectionVariant + filter/hidden consistency",
-                "The variant injects a `$filter` clause for a column the server won't filter on — the variant won't apply at runtime.",
+                "筛选变体为服务器不支持筛选的列生成了 `$filter` 子句，因此运行时无法应用该变体。"
             ));
         }
     }
@@ -385,11 +385,11 @@ pub(super) fn check_consistency(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Identity,
                 "semantic_object_no_key",
                 format!(
-                    "Common.SemanticObject declared on {} but no Common.SemanticKey on the entity.",
+                    "属性 {} 声明了 Common.SemanticObject，但实体未声明 Common.SemanticKey。",
                     semantic_object_props.join(", "),
                 ),
                 "@Consumption.semanticObject + @ObjectModel.semanticKey",
-                "Cross-app nav target won't carry a business key — the launchpad link will be malformed or open the generic landing page.",
+                "跨应用导航不会携带业务键，导致启动板链接格式错误或打开通用首页。"
             ));
         }
     }
@@ -444,11 +444,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "text_target_missing",
                 format!(
-                    "Common.Text points at a column that doesn't exist on this entity: {}",
+                    "Common.Text 指向了此实体中不存在的列：{}",
                     dangling.join(", "),
                 ),
                 "@ObjectModel.text.element",
-                "The referenced description column isn't reachable — Fiori will render the raw code with no text.",
+                "无法访问所引用的描述列，Fiori 将只显示原始代码而没有描述文本。"
             ));
         }
     }
@@ -469,11 +469,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "unit_target_missing",
                 format!(
-                    "Measures.Unit / sap:unit points at a column that doesn't exist: {}",
+                    "Measures.Unit / sap:unit 指向了不存在的列：{}",
                     dangling.join(", "),
                 ),
                 "@Semantics.quantity.unitOfMeasure",
-                "The quantity column has no resolvable unit companion — Fiori will show the raw number.",
+                "数量列没有可解析的计量单位关联，Fiori 将显示原始数值。"
             ));
         }
     }
@@ -494,11 +494,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "currency_target_missing",
                 format!(
-                    "Measures.ISOCurrency points at a column that doesn't exist: {}",
+                    "Measures.ISOCurrency 指向了不存在的列：{}",
                     dangling.join(", "),
                 ),
                 "@Semantics.amount.currencyCode",
-                "The amount column has no resolvable currency companion — Fiori can't format the value.",
+                "金额列没有可解析的货币关联，Fiori 无法正确格式化该数值。"
             ));
         }
     }
@@ -519,11 +519,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "criticality_target_missing",
                 format!(
-                    "UI.Criticality Path references a column that doesn't exist: {}",
+                    "UI.Criticality Path 引用了不存在的列：{}",
                     dangling.join(", "),
                 ),
                 "@UI.criticality (Path form)",
-                "Cell coloring depends on a column that won't resolve — cells will never get colored.",
+                "单元格着色依赖的列无法解析，因此单元格不会显示颜色。"
             ));
         }
     }
@@ -536,11 +536,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
             LintCategory::Integrity,
             "header_info_title_missing",
             format!(
-                "UI.HeaderInfo.Title references a column that doesn't exist: {}",
+                "UI.HeaderInfo.Title 引用了不存在的列：{}",
                 title,
             ),
             "@UI.headerInfo.title.value",
-            "Object-page title won't resolve — Fiori will fall back to the technical type name.",
+            "对象页标题无法解析，Fiori 将回退为技术类型名称。"
         ));
     }
     {
@@ -556,11 +556,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "semantic_key_target_missing",
                 format!(
-                    "Common.SemanticKey references column(s) that don't exist: {}",
+                    "Common.SemanticKey 引用了不存在的列：{}",
                     bad.join(", "),
                 ),
                 "@ObjectModel.semanticKey",
-                "The business-key hint points at columns Fiori can't resolve.",
+                "业务键提示指向了 Fiori 无法解析的列。"
             ));
         }
     }
@@ -577,11 +577,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "selection_field_target_missing",
                 format!(
-                    "UI.SelectionFields references column(s) that don't exist: {}",
+                    "UI.SelectionFields 引用了不存在的列：{}",
                     bad.join(", "),
                 ),
                 "@UI.selectionField",
-                "Filter-bar chip will be dead — server will 400 when the user types a value.",
+                "筛选栏中的筛选项将无法使用；用户输入值时服务器会返回 400 错误。"
             ));
         }
     }
@@ -598,11 +598,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "line_item_target_missing",
                 format!(
-                    "UI.LineItem DataField references column(s) that don't exist: {}",
+                    "UI.LineItem DataField 引用了不存在的列：{}",
                     bad.join(", "),
                 ),
                 "@UI.lineItem",
-                "Declared list-report columns point at properties that aren't on the entity — they'll silently drop at runtime.",
+                "列表报表列指向了实体中不存在的属性，运行时这些列会被静默忽略。"
             ));
         }
     }
@@ -619,11 +619,11 @@ pub(super) fn check_integrity(et: &EntityType, out: &mut Vec<LintFinding>) {
                 LintCategory::Integrity,
                 "sort_order_target_missing",
                 format!(
-                    "UI.PresentationVariant.SortOrder references column(s) that don't exist: {}",
+                    "UI.PresentationVariant.SortOrder 引用了不存在的列：{}",
                     bad.join(", "),
                 ),
                 "@UI.presentationVariant.sortOrder",
-                "Declared default sort won't run — Fiori silently drops the clause.",
+                "声明的默认排序无法执行，Fiori 会静默忽略该排序子句。"
             ));
         }
     }
@@ -650,9 +650,9 @@ pub(super) fn check_capabilities(et: &EntityType, out: &mut Vec<LintFinding>) {
             LintSeverity::Warn,
             LintCategory::Capabilities,
             "capabilities_silent",
-            "No Capabilities.* annotations — clients can't pre-flight validate; they'll discover limits at runtime.".to_string(),
+            "未声明 Capabilities.* 注解——客户端无法预先验证支持范围，只能在运行时发现限制。".to_string(),
             "@Search.searchable / @Search.defaultSearchElement / @Consumption.filter.*",
-            "Tells clients which operations the service actually supports so the UI can disable unsupported gestures up front.",
+            "告知客户端服务实际支持的操作，使界面能提前禁用不支持的操作。"
         ));
     }
 }

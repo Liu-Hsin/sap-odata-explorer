@@ -144,7 +144,7 @@ fn services_fails_when_every_catalog_fails() {
         stdout(&out)
     );
     assert!(
-        stderr(&out).contains("could not fetch the service catalog"),
+        stderr(&out).contains("无法获取服务目录"),
         "{}",
         stderr(&out)
     );
@@ -252,7 +252,7 @@ fn global_profile_flag_on_offline_list_explains_the_clash() {
     assert!(!out.status.success());
     let err = stderr(&out);
     assert!(
-        err.contains("is a connected profile, not an offline bucket"),
+        err.contains("是连接配置，不是离线配置桶"),
         "{err}"
     );
     assert!(
@@ -275,6 +275,7 @@ fn help_never_prints_credential_env_values() {
         .unwrap();
     assert!(out.status.success());
     let help = stdout(&out);
+    assert!(help.contains("浏览实体"), "CLI help should be in Chinese");
     // The variable names stay documented …
     assert!(
         help.contains("SAP_PASSWORD"),
@@ -443,7 +444,7 @@ fn profile_add_blank_password_keeps_plaintext_password_and_insecure_tls() {
     ]);
     assert!(out.status.success(), "{}", stderr(&out));
     assert!(
-        stdout(&out).contains("Password unchanged"),
+        stdout(&out).contains("密码未更改"),
         "{}",
         stdout(&out)
     );
@@ -466,8 +467,8 @@ fn profile_add_without_password_does_not_claim_a_keyring_write() {
     ]);
     assert!(out.status.success(), "{}", stderr(&out));
     let text = stdout(&out);
-    assert!(!text.contains("stored in OS keyring"), "{text}");
-    assert!(text.contains("No password stored"), "{text}");
+    assert!(!text.contains("已保存到操作系统凭据库"), "{text}");
+    assert!(text.contains("尚未保存密码"), "{text}");
 }
 
 // ── environment labels (SSO profile: no keyring involvement) ──
@@ -507,7 +508,7 @@ fn profile_env_is_set_kept_cleared_and_validated() {
     ]);
     assert!(out.status.success(), "{}", stderr(&out));
     assert!(
-        stderr(&out).contains("production (PRD)"),
+        stderr(&out).contains("生产环境（PRD）"),
         "{}",
         stderr(&out)
     );
@@ -517,7 +518,7 @@ fn profile_env_is_set_kept_cleared_and_validated() {
     let out = add(&["--env", "banana"]);
     assert!(!out.status.success());
     assert!(
-        stderr(&out).contains("unknown environment"),
+        stderr(&out).contains("未知环境"),
         "{}",
         stderr(&out)
     );
@@ -573,7 +574,7 @@ fn metadata_commands_work_against_an_offline_bucket() {
     // Anything that would query SAP is refused, clearly.
     let out = sb.run(&["-p", "Imported", "-s", &id, "run", "Item"]);
     assert!(!out.status.success());
-    assert!(stderr(&out).contains("offline profile"), "{}", stderr(&out));
+    assert!(stderr(&out).contains("离线配置"), "{}", stderr(&out));
 
     // Unknown service: points at `offline list`.
     let out = sb.run(&["-p", "Imported", "-s", "nope", "entities"]);

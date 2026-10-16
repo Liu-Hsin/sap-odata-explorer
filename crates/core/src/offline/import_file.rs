@@ -112,7 +112,7 @@ pub fn import_edmx_from_bytes(
             source: e,
         })?;
         *config = toml::from_str(&content)
-            .map_err(|e| SaveError::TomlSerialize(format!("reload parse: {e}")))?;
+            .map_err(|e| SaveError::TomlSerialize(format!("重新加载时解析失败：{e}")))?;
     }
 
     // 1. Size cap is the only invariant we enforce on already-loaded

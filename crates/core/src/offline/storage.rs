@@ -47,15 +47,15 @@ use super::paths::{PathError, canonicalize_under, safe_join_under};
 /// `PathError` so callers can match on the specific failure surface.
 #[derive(Debug, Error)]
 pub enum StorageError {
-    #[error("path safety violation: {0}")]
+    #[error("路径安全检查失败：{0}")]
     Path(#[from] PathError),
-    #[error("I/O error at {path}: {source}")]
+    #[error("路径 '{path}' 的输入/输出操作失败：{source}")]
     Io {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
-    #[error("could not create directory {path}: {source}")]
+    #[error("无法创建目录 '{path}'：{source}")]
     Mkdir {
         path: PathBuf,
         #[source]

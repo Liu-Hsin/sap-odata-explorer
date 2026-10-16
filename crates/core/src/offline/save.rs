@@ -133,25 +133,25 @@ pub enum SaveKind {
 
 #[derive(Debug, Error)]
 pub enum SaveError {
-    #[error("connected profile '{0}' not found")]
+    #[error("找不到连接配置 '{0}'")]
     ConnectedProfileNotFound(String),
 
-    #[error("network fetch failed: {0}")]
+    #[error("网络获取失败：{0}")]
     Fetch(#[source] ODataError),
 
     /// Validation of the fetched/imported bytes failed. The wrapped
     /// `ImportError` carries the friendly user-facing message.
-    #[error("metadata validation failed: {0}")]
+    #[error("元数据校验失败：{0}")]
     Validation(#[from] ImportError),
 
-    #[error("storage error: {0}")]
+    #[error("存储错误：{0}")]
     Storage(#[from] StorageError),
 
     /// The chosen `offline_profile_name` collides with an existing
     /// `connections` profile name. Global uniqueness across both maps
     /// is required so internal dispatch by name is unambiguous.
     #[error(
-        "cannot create offline profile '{name}' — a connected profile with the same name already exists"
+        "无法创建离线配置 '{name}'：同名连接配置已存在"
     )]
     OfflineProfileNameConflict { name: String },
 
@@ -164,7 +164,7 @@ pub enum SaveError {
     /// The catch-all `Imported` bucket (with empty `source_profile`)
     /// is exempt from this check.
     #[error(
-        "offline profile '{bucket}' is attributed to source '{existing_source}' — refusing to save bytes from a different source '{new_source}'. Pick a different bucket or create a new one."
+        "离线配置 '{bucket}' 关联的来源为 '{existing_source}'，不能将来源 '{new_source}' 的数据保存到此配置。请选择其他配置桶或新建配置。"
     )]
     SourceProfileMismatch {
         bucket: String,
@@ -178,7 +178,7 @@ pub enum SaveError {
     /// recovered (older than `LOCK_STALE_SECONDS` triggers automatic
     /// reclaim, so reaching this means contention is real).
     #[error(
-        "could not acquire offline-save lock within the timeout — another process is likely writing to the offline library. Retry shortly."
+        "在超时时间内未能获取离线保存锁；可能有其他进程正在写入离线库，请稍后重试。"
     )]
     LockContention,
 
@@ -186,7 +186,7 @@ pub enum SaveError {
     /// happen in practice (the structures are all `Serialize`); kept as
     /// an explicit variant so we don't paper over a real bug with
     /// `unwrap`.
-    #[error("failed to serialize connections.toml: {0}")]
+    #[error("序列化 connections.toml 失败：{0}")]
     TomlSerialize(String),
 }
 
@@ -285,7 +285,7 @@ pub fn save_service_offline_from_bytes(
             source: e,
         })?;
         *config = toml::from_str(&content)
-            .map_err(|e| SaveError::TomlSerialize(format!("reload parse: {e}")))?;
+            .map_err(|e| SaveError::TomlSerialize(format!("重新加载时解析失败：{e}")))?;
     }
 
     // 1. Validate the metadata bytes. Any rejection here returns the

@@ -43,7 +43,16 @@ pub fn evaluate_entity_type_with_profile(
         severity: LintSeverity::Pass,
         category: LintCategory::Profile,
         code: "profile",
-        message: format!("Evaluated as {}.", profile.label()),
+        message: format!(
+            "评估类型：{}。",
+            match profile {
+                LintProfile::ListReport => "列表报表",
+                LintProfile::ObjectPage => "对象页",
+                LintProfile::ValueHelp => "值帮助",
+                LintProfile::Analytical => "分析型",
+                LintProfile::Transactional => "事务型",
+            }
+        ),
         suggested_cds: None,
         why_in_fiori: None,
     });
@@ -190,7 +199,7 @@ mod tests {
         let findings = evaluate_entity_type(et);
         // Profile banner is first.
         assert_eq!(findings[0].code, "profile");
-        assert!(findings[0].message.contains("value_help"));
+        assert!(findings[0].message.contains("值帮助"));
         // No miss findings for list-report-shaped checks.
         let miss_codes: Vec<_> = findings
             .iter()
@@ -423,7 +432,7 @@ mod tests {
         let et = meta.find_entity_type("OrderType").unwrap();
         let findings = evaluate_entity_type_with_profile(et, LintProfile::ListReport);
         assert_eq!(findings[0].code, "profile");
-        assert!(findings[0].message.contains("list_report"));
+        assert!(findings[0].message.contains("列表报表"));
         let miss_codes: Vec<_> = findings
             .iter()
             .filter(|f| f.severity == LintSeverity::Miss)
@@ -455,7 +464,7 @@ mod tests {
         let et = meta.find_entity_type("OrderType").unwrap();
         let findings = evaluate_entity_type_with_profile(et, LintProfile::ObjectPage);
         assert_eq!(findings[0].code, "profile");
-        assert!(findings[0].message.contains("object_page"));
+        assert!(findings[0].message.contains("对象页"));
         let miss_codes: Vec<_> = findings
             .iter()
             .filter(|f| f.severity == LintSeverity::Miss)

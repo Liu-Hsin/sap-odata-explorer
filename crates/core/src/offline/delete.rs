@@ -33,21 +33,21 @@ use crate::config::ConfigFile;
 
 #[derive(Debug, Error)]
 pub enum DeleteError {
-    #[error("offline profile '{0}' not found")]
+    #[error("找不到离线配置 '{0}'")]
     ProfileNotFound(String),
-    #[error("offline service '{service_id}' not found in profile '{profile}'")]
+    #[error("离线配置 '{profile}' 中找不到服务 '{service_id}'")]
     ServiceNotFound { profile: String, service_id: String },
-    #[error("path safety violation: {0}")]
+    #[error("路径安全检查失败：{0}")]
     Path(#[from] PathError),
-    #[error("storage error: {0}")]
+    #[error("存储错误：{0}")]
     Storage(#[from] StorageError),
     /// The internal save-side errors (lockfile contention, TOML
     /// serialize failure) bubble up via the existing `SaveError`
     /// variants — re-using them keeps the error surface unified for
     /// the UI / CLI.
-    #[error("save error: {0}")]
+    #[error("保存错误：{0}")]
     Save(#[from] SaveError),
-    #[error("I/O error at {path}: {source}")]
+    #[error("路径 '{path}' 的输入/输出操作失败：{source}")]
     Io {
         path: String,
         #[source]
@@ -99,7 +99,7 @@ pub fn delete_offline_service(
             source: e,
         })?;
         *config = toml::from_str(&content).map_err(|e| {
-            DeleteError::Save(SaveError::TomlSerialize(format!("reload parse: {e}")))
+            DeleteError::Save(SaveError::TomlSerialize(format!("重新加载时解析失败：{e}")))
         })?;
     }
 
@@ -206,7 +206,7 @@ pub fn delete_offline_profile(
             source: e,
         })?;
         *config = toml::from_str(&content).map_err(|e| {
-            DeleteError::Save(SaveError::TomlSerialize(format!("reload parse: {e}")))
+            DeleteError::Save(SaveError::TomlSerialize(format!("重新加载时解析失败：{e}")))
         })?;
     }
 

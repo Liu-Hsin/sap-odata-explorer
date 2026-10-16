@@ -18,44 +18,44 @@ use sap_odata_core::{
 #[command(
     name = "sap-odata",
     version,
-    about = "SAP OData Service Explorer — browse entities, build queries, test services"
+    about = "SAP OData 服务浏览器——浏览实体、构建查询并测试服务"
 )]
 struct Cli {
-    /// Connection profile name (from connections.toml)
+    /// 连接配置名称（来自 connections.toml）
     #[arg(long, short = 'p', global = true)]
     profile: Option<String>,
 
-    /// SAP system base URL (overrides profile)
+    /// SAP 系统基础 URL（覆盖配置文件中的值）
     #[arg(long, env = "SAP_BASE_URL")]
     url: Option<String>,
 
-    /// SAP client number (overrides profile)
+    /// SAP 客户端编号（覆盖配置文件中的值）
     #[arg(long, env = "SAP_CLIENT")]
     client: Option<String>,
 
-    /// Language key (overrides profile)
+    /// 语言代码（覆盖配置文件中的值）
     #[arg(long, env = "SAP_LANGUAGE")]
     language: Option<String>,
 
-    /// Username for basic auth (overrides profile)
+    /// Basic 认证用户名（覆盖配置文件中的值）
     #[arg(long, env = "SAP_USER", hide_env_values = true)]
     user: Option<String>,
 
-    /// Password for basic auth (overrides profile)
+    /// Basic 认证密码（覆盖配置文件中的值）
     // hide_env_values: without it, `--help` prints `[env: SAP_PASSWORD=<value>]`.
     #[arg(long, env = "SAP_PASSWORD", hide_env_values = true)]
     password: Option<String>,
 
-    /// OData service path (e.g., /sap/opu/odata/sap/ZMY_SERVICE_SRV).
-    /// Required for all commands except 'services' and 'profile'.
+    /// OData 服务路径（例如 /sap/opu/odata/sap/ZMY_SERVICE_SRV）。
+    /// 除 services 和 profile 外，其他命令均需要此参数。
     #[arg(long, short = 's')]
     service: Option<String>,
 
-    /// Output as JSON instead of table
+    /// 以 JSON 格式输出，而不是表格
     #[arg(long, global = true)]
     json: bool,
 
-    /// Show debug logs
+    /// 显示调试日志
     #[arg(long, short = 'v', global = true)]
     verbose: bool,
 
@@ -65,257 +65,238 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Interactive wizard for adding a new SAP system
+    /// 通过交互式向导添加 SAP 系统
     Setup,
 
-    /// Clear persisted Browser SSO session for a profile
+    /// 清除指定配置的 Browser SSO 会话
     Signout {
-        /// Profile name
+        /// 配置名称
         name: String,
     },
 
-    /// Manage connection profiles
+    /// 管理连接配置
     Profile {
         #[command(subcommand)]
         action: ProfileAction,
     },
 
-    /// Manage service aliases for a profile (requires -p)
+    /// 管理连接配置的服务别名（需要 -p）
     Alias {
         #[command(subcommand)]
         action: AliasAction,
     },
 
-    /// List all available OData services from the SAP Gateway catalog
+    /// 列出 SAP Gateway 服务目录中的所有 OData 服务
     Services {
-        /// Filter services by name, title, or description (case-insensitive)
+        /// 按名称、标题或描述筛选服务（不区分大小写）
         #[arg(long, short = 'f')]
         filter: Option<String>,
 
-        /// Show only V2 services
+        /// 仅显示 V2 服务
         #[arg(long)]
         v2: bool,
 
-        /// Show only V4 services
+        /// 仅显示 V4 服务
         #[arg(long)]
         v4: bool,
 
-        /// Max number of services to display
+        /// 最多显示的服务数量
         #[arg(long)]
         top: Option<usize>,
     },
 
-    /// List all entity sets in the service
+    /// 列出服务中的所有实体集
     Entities,
 
-    /// Describe an entity type — show properties, keys, and navigation properties
+    /// 描述实体类型——显示属性、键和导航属性
     Describe {
-        /// Entity set name (e.g., CustomerSet)
+        /// 实体集名称（例如 CustomerSet）
         entity_set: String,
     },
 
-    /// List function imports in the service
+    /// 列出服务中的函数导入
     Functions,
 
-    /// Build and display an OData query URL (dry-run)
+    /// 构建并显示 OData 查询 URL（不发送请求）
     #[command(
-        long_about = "Build and display the OData query URL without sending it.\n\
+        long_about = "构建并显示 OData 查询 URL，但不发送请求。\n\
         \n\
-        Common flags (also accepted by `run`):\n  \
-            --select FIELDS        comma-separated $select list\n  \
-            --filter EXPR          raw OData $filter expression\n  \
-            --in PROP V1 V2 ...    OR'd equality shortcut: builds (PROP eq 'V1' or PROP eq 'V2' ...)\n  \
-            --expand NAVS          comma-separated $expand list\n  \
-            --orderby CLAUSES      comma-separated $orderby clauses (e.g. \"Name asc,Date desc\")\n  \
-            --top N                $top\n  \
-            --skip N               $skip\n  \
-            --key K                single-entity read: CustomerSet(K)\n  \
-            --count                request inline count\n  \
-            --json                 emit URL as a JSON string instead of plain text"
+        常用参数（`run` 命令也支持）：\n  \
+            --select 字段列表       以逗号分隔的 $select 字段\n  \
+            --filter 表达式         原始 OData $filter 表达式\n  \
+            --in 属性 值...         OR 等值快捷写法，生成 (属性 eq '值1' or 属性 eq '值2' ...)\n  \
+            --expand 导航属性       以逗号分隔的 $expand 导航属性\n  \
+            --orderby 排序子句      以逗号分隔的 $orderby 子句（例如 \"Name asc,Date desc\"）\n  \
+            --top 数量              $top\n  \
+            --skip 数量             $skip\n  \
+            --key 键值              读取单个实体：CustomerSet(K)\n  \
+            --count                 请求内联计数\n  \
+            --json                  将 URL 作为 JSON 字符串输出，而不是纯文本"
     )]
     Build {
-        /// Entity set name
+        /// 实体集名称
         entity_set: String,
 
-        /// Fields to select (comma-separated)
+        /// 要选择的字段（以逗号分隔）
         #[arg(long)]
         select: Option<String>,
 
-        /// Filter expression
+        /// 筛选表达式
         #[arg(long)]
         filter: Option<String>,
 
-        /// OR'd equality shortcut. Usage: `--in PROP V1 V2 V3` builds
-        /// `(PROP eq 'V1' or PROP eq 'V2' or PROP eq 'V3')`. Combines with
-        /// `--filter` via AND. Saves PowerShell-escaping pain when filtering
-        /// against a small set of values. String values only; quoting is
-        /// applied automatically.
+        /// OR 等值快捷写法。用法：`--in PROP V1 V2 V3` 生成
+        /// `(PROP eq 'V1' or PROP eq 'V2' or PROP eq 'V3')`。与 `--filter`
+        /// 通过 AND 组合。仅支持字符串值，程序会自动添加引号。
         #[arg(long = "in", num_args = 2.., value_name = "PROP VALUES...")]
         in_values: Vec<String>,
 
-        /// Navigation properties to expand (comma-separated)
+        /// 要展开的导航属性（以逗号分隔）
         #[arg(long)]
         expand: Option<String>,
 
-        /// Order by clause (comma-separated, e.g. "Name asc,Date desc")
+        /// 排序子句（以逗号分隔，例如 "Name asc,Date desc"）
         #[arg(long)]
         orderby: Option<String>,
 
-        /// Max number of results
+        /// 最大结果数
         #[arg(long)]
         top: Option<u32>,
 
-        /// Number of results to skip
+        /// 跳过的结果数
         #[arg(long)]
         skip: Option<u32>,
 
-        /// Entity key (e.g., "'CUST01'" or "CustomerID='CUST01',CompanyCode='1000'")
+        /// 实体键（例如 "'CUST01'" 或 "CustomerID='CUST01',CompanyCode='1000'"）
         #[arg(long)]
         key: Option<String>,
 
-        /// Request inline count
+        /// 请求内联计数
         #[arg(long)]
         count: bool,
     },
 
-    /// Execute an OData query and display the results
-    #[command(long_about = "Execute the OData query and render the results.\n\
+    /// 执行 OData 查询并显示结果
+    #[command(long_about = "执行 OData 查询并显示结果。\n\
         \n\
-        Common flags:\n  \
-            --select FIELDS        comma-separated $select list\n  \
-            --filter EXPR          raw OData $filter expression\n  \
-            --in PROP V1 V2 ...    OR'd equality shortcut: builds (PROP eq 'V1' or PROP eq 'V2' ...)\n  \
-            --expand NAVS          comma-separated $expand list\n  \
-            --orderby CLAUSES      comma-separated $orderby clauses\n  \
-            --top N                $top (default: server-side limit)\n  \
-            --skip N               $skip (pagination)\n  \
-            --key K                single-entity read\n  \
-            --count                request inline count\n  \
-            --json                 emit the raw response JSON instead of the table\n\
+        常用参数：\n  \
+            --select 字段列表       以逗号分隔的 $select 字段\n  \
+            --filter 表达式         原始 OData $filter 表达式\n  \
+            --in 属性 值...         OR 等值快捷写法，生成 (属性 eq '值1' or 属性 eq '值2' ...)\n  \
+            --expand 导航属性       以逗号分隔的 $expand 导航属性\n  \
+            --orderby 排序子句      以逗号分隔的 $orderby 子句\n  \
+            --top 数量              $top（默认由服务端限制）\n  \
+            --skip 数量             $skip（分页）\n  \
+            --key 键值              读取单个实体\n  \
+            --count                 请求内联计数\n  \
+            --json                  输出原始响应 JSON，而不是表格\n\
         \n\
-        Use `build` instead to print the URL without sending the request.")]
+        如需仅生成 URL 而不发送请求，请改用 `build`。")]
     Run {
-        /// Entity set name
+        /// 实体集名称
         entity_set: String,
 
-        /// Fields to select (comma-separated)
+        /// 要选择的字段（以逗号分隔）
         #[arg(long)]
         select: Option<String>,
 
-        /// Filter expression
+        /// 筛选表达式
         #[arg(long)]
         filter: Option<String>,
 
-        /// OR'd equality shortcut. Usage: `--in PROP V1 V2 V3` builds
-        /// `(PROP eq 'V1' or PROP eq 'V2' or PROP eq 'V3')`. Combines with
-        /// `--filter` via AND.
+        /// OR 等值快捷写法。用法：`--in PROP V1 V2 V3` 生成
+        /// `(PROP eq 'V1' or PROP eq 'V2' or PROP eq 'V3')`，并通过 AND 与 `--filter` 组合。
         #[arg(long = "in", num_args = 2.., value_name = "PROP VALUES...")]
         in_values: Vec<String>,
 
-        /// Navigation properties to expand (comma-separated)
+        /// 要展开的导航属性（以逗号分隔）
         #[arg(long)]
         expand: Option<String>,
 
-        /// Order by clause
+        /// 排序子句
         #[arg(long)]
         orderby: Option<String>,
 
-        /// Max number of results
+        /// 最大结果数
         #[arg(long)]
         top: Option<u32>,
 
-        /// Number of results to skip
+        /// 跳过的结果数
         #[arg(long)]
         skip: Option<u32>,
 
-        /// Entity key
+        /// 实体键
         #[arg(long)]
         key: Option<String>,
 
-        /// Request inline count
+        /// 请求内联计数
         #[arg(long)]
         count: bool,
     },
 
-    /// Fetch and display the raw $metadata XML
+    /// 获取并显示原始 $metadata XML
     Metadata,
 
-    /// Smoke-test every entity set in a service. Issues a small
-    /// `$top` GET against each set and reports OK / FAIL with row
-    /// counts. Exit code is 0 when every probe succeeded, 1 otherwise
-    /// — intended as a CI- and agent-friendly health check.
-    #[command(long_about = "Smoke-test every entity set in a service.\n\
+    /// 对服务中的每个实体集进行冒烟测试。分别发送小型 `$top` GET 请求，
+    /// 并报告成功/失败及行数。全部探测成功时退出码为 0，否则为 1，
+    /// 可用于 CI 健康检查。
+    #[command(long_about = "对服务中的每个实体集进行冒烟测试。\n\
         \n\
-        Issues a small `$top` GET against each set and reports OK / FAIL\n\
-        with row counts. SAP V4 framework sets (SAP__/__ prefixed) are\n\
-        skipped because they're runtime plumbing, not user data.\n\
+        分别对每个实体集发送小型 `$top` GET 请求，并报告成功/失败及行数。\n\
+        SAP V4 框架实体集（以 SAP__/__ 开头）会被跳过，因为它们属于运行时结构而非业务数据。\n\
         \n\
-        Flags:\n  \
-            --quick                only list entity sets, no per-set GET\n  \
-            --top N                $top per probe (default 1)\n  \
-            --json                 emit results as a JSON array\n\
+        参数：\n  \
+            --quick                仅列出实体集，不逐个发送 GET 请求\n  \
+            --top 数量             每次探测使用的 $top（默认 1）\n  \
+            --json                 以 JSON 数组输出结果\n\
         \n\
-        Exit code: 0 when every probe succeeded, 1 if any probe failed.")]
+        退出码：全部探测成功时为 0，任一探测失败时为 1。")]
     Verify {
-        /// Just list entity sets, skip the per-set probe.
+        /// 仅列出实体集，跳过逐个探测
         #[arg(long)]
         quick: bool,
 
-        /// $top to use on each probe. Smaller is faster; the default
-        /// of 1 is enough to confirm the set is reachable.
+        /// 每次探测使用的 $top。数值越小越快；默认值 1 足以确认实体集可访问。
         #[arg(long, default_value_t = 1)]
         top: u32,
     },
 
-    /// Fiori-readiness checklist for an entity. Evaluates the
-    /// service's annotations against what a Fiori list-report /
-    /// object-page app would normally expect (HeaderInfo, LineItem,
-    /// SelectionFields, Text/Unit pairings, Capabilities...). Scope
-    /// it to one entity or omit the positional arg to scan the whole
-    /// service.
+    /// 检查实体是否满足 Fiori 使用要求。根据 Fiori 列表报表/对象页通常需要的
+    /// 服务注解进行评估（HeaderInfo、LineItem、SelectionFields、Text/Unit 关联、Capabilities 等）。
+    /// 可指定单个实体；省略参数则扫描整个服务。
     Lint {
-        /// Entity type / entity set name. Either works — we resolve to
-        /// the type. Omit to lint every entity in the service.
+        /// 实体类型或实体集名称。两种名称均可；省略则检查服务中的所有实体。
         entity: Option<String>,
 
-        /// Only show findings at or above this severity level
-        /// (pass / warn / miss). Defaults to showing everything.
+        /// 仅显示达到此严重级别的结果（pass / warn / miss），默认显示全部。
         #[arg(long)]
         min_severity: Option<String>,
 
-        /// Override the auto-detected lint profile. Useful when the
-        /// heuristics misread a service (e.g. a list-report-shaped
-        /// entity that lacks the naming convention) or to ask "how
-        /// list-report-ready is this value-help service?". Named
-        /// `--lint-profile` to avoid clashing with the global
-        /// connection-profile flag (`-p, --profile`).
+        /// 覆盖自动检测的 lint 配置类型。适用于启发式判断不准确时；
+        /// 例如实体形状符合列表报表，但名称不符合约定。使用 --lint-profile
+        /// 以区别全局连接配置参数（-p、--profile）。
         #[arg(long = "lint-profile", value_enum)]
         lint_profile: Option<LintProfileArg>,
 
-        /// Exit non-zero if any finding at or above this severity is
-        /// present. Intended for CI use. Independent of `--min-severity`,
-        /// which only filters what's displayed.
+        /// 存在达到此严重级别的结果时以非零状态退出，适用于 CI。
+        /// 此参数独立于 --min-severity，后者仅筛选显示内容。
         #[arg(long, value_enum)]
         fail_on: Option<FailOnArg>,
     },
 
-    /// List every SAP/UI5 annotation parsed from `$metadata`, grouped
-    /// by vocabulary namespace. Useful for answering "does this
-    /// service declare X?" without re-reading the raw XML.
+    /// 列出从 $metadata 解析出的所有 SAP/UI5 注解，并按词汇命名空间分组。
+    /// 可用于确认服务是否声明了某项注解，而无需重新查看原始 XML。
     Annotations {
-        /// Filter to a specific namespace (e.g. "UI", "Common",
-        /// "Capabilities"). Case-insensitive. Omit to list all.
+        /// 按命名空间筛选（例如 "UI"、"Common"、"Capabilities"），不区分大小写；省略则列出全部。
         #[arg(long)]
         namespace: Option<String>,
 
-        /// Substring match applied to Term + Target + Value +
-        /// Qualifier (case-insensitive).
+        /// 在 Term、Target、Value 和 Qualifier 字段中进行子串匹配（不区分大小写）。
         #[arg(long)]
         filter: Option<String>,
     },
 
-    /// Manage the offline EDMX library (save / list / import services
-    /// for offline browsing).
+    /// 管理离线 EDMX 库（保存、列出或导入服务，以供离线浏览）
     Offline {
         #[command(subcommand)]
         action: OfflineAction,
@@ -324,84 +305,64 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum OfflineAction {
-    /// Save the current connection's `$metadata` for a service into the
-    /// offline library. Requires `-p PROFILE -s SERVICE`. The bytes are
-    /// written under `{config}/offline/`, attributed to the connected
-    /// profile; subsequent re-saves overwrite the file in place under
-    /// the same stable `service_id`.
+    /// 将当前连接服务的 $metadata 保存到离线库。需要 -p PROFILE -s SERVICE。
+    /// 文件写入 {config}/offline/ 并关联到当前连接配置；再次保存时会使用相同的 service_id 覆盖原文件。
     Save {
-        /// Override the offline-profile bucket name. Defaults to
-        /// `<connected> (offline)`. If the chosen name doesn't yet
-        /// exist as an offline profile, it's created; the name must
-        /// not collide with an existing connected profile.
+        /// 指定离线配置桶名称。默认使用 <连接配置名> (offline)。
+        /// 若该名称尚不存在则会创建；不能与现有连接配置重名。
         #[arg(long)]
         offline_profile: Option<String>,
 
-        /// Override the auto-derived display label. The label-derivation
-        /// rule for V4 SAP services produces e.g. `UI_PHYSSTOCKPROD_1`
-        /// from the schema namespace; pass `--label` to override.
+        /// 覆盖自动生成的显示标签。V4 SAP 服务会根据 Schema 命名空间生成标签，
+        /// 例如 UI_PHYSSTOCKPROD_1。
         #[arg(long)]
         label: Option<String>,
 
-        /// Optional free-form note to attach to the saved entry.
+        /// 附加到保存条目的备注（可选）
         #[arg(long)]
         note: Option<String>,
     },
 
-    /// Import an EDMX file from disk into the offline library. No
-    /// connected profile needed — the file is read, validated, and
-    /// indexed. Suitable for files pulled from API Hub, exported via
-    /// `/IWFND/GW_CLIENT` "Save Response", or downloaded with
-    /// `curl <base>/$metadata > out.xml`.
+    /// 将磁盘上的 EDMX 文件导入离线库。无需连接配置；程序会读取、验证并索引文件。
+    /// 可导入从 API Hub 获取、由 /IWFND/GW_CLIENT 的“Save Response”导出，
+    /// 或通过 curl <base>/$metadata > out.xml 下载的文件。
     Import {
-        /// Path to the EDMX file on disk. Must be a regular file,
-        /// UTF-8 encoded, ≤ 10 MB.
+        /// 磁盘上的 EDMX 文件路径。必须是普通文件、UTF-8 编码且不超过 10 MB。
         file: std::path::PathBuf,
 
-        /// Target offline-profile bucket. Defaults to `Imported` —
-        /// the catch-all where mixed-source captures coexist.
+        /// 目标离线配置桶。默认为 Imported，用于存放来自不同来源的文件。
         #[arg(long)]
         offline_profile: Option<String>,
 
-        /// Override the auto-derived display label. Auto-derivation
-        /// reads the file's `Schema Namespace`; for unknown shapes
-        /// the filename stem is used as a fallback.
+        /// 覆盖自动生成的显示标签。默认读取文件中的 Schema Namespace；
+        /// 无法识别时使用文件名（不含扩展名）。
         #[arg(long)]
         label: Option<String>,
 
-        /// Optional free-form note to attach to the imported entry.
+        /// 附加到导入条目的备注（可选）
         #[arg(long)]
         note: Option<String>,
     },
 
-    /// List all services in an offline-profile bucket. With no
-    /// `--profile` argument, lists all offline profiles instead.
+    /// 列出离线配置桶中的所有服务。未指定 --profile 时，改为列出所有离线配置。
     List {
-        /// Offline-profile bucket name to list services from. Omit
-        /// to list the buckets themselves.
+        /// 要列出服务的离线配置桶名称；省略则列出配置桶。
         #[arg(long)]
         profile: Option<String>,
     },
 
-    /// Delete an offline service or a whole offline-profile bucket.
-    /// With `--service-id`, removes a single service (file + index
-    /// row); without it, removes the entire bucket (every service and
-    /// its cached file, the bucket directory once empty, and the index
-    /// entry). Only files indexed to the bucket are removed — never a
-    /// recursive directory delete. Both operations go through the same
-    /// `safe_join_under` + `canonicalize_under` boundary checks as the
-    /// GUI's Remove button.
+    /// 删除离线服务或整个离线配置桶。指定 --service-id 时仅删除单个服务（文件和索引记录）；
+    /// 否则删除整个配置桶及其缓存文件。只删除索引记录的文件，不会递归删除目录。
     Delete {
-        /// Offline-profile bucket name (required).
+        /// 离线配置桶名称（必填）
         #[arg(long)]
         profile: String,
 
-        /// Specific service id to delete. Omit to delete the whole
-        /// bucket. Use `offline list --profile NAME` to see ids.
+        /// 要删除的服务 ID。省略则删除整个配置桶。使用 `offline list --profile NAME` 查看 ID。
         #[arg(long)]
         service_id: Option<String>,
 
-        /// Skip the confirmation prompt. Useful in scripts.
+        /// 跳过确认提示，适用于脚本
         #[arg(long, short = 'y')]
         yes: bool,
     },
@@ -453,92 +414,90 @@ impl From<FailOnArg> for LintSeverity {
 
 #[derive(Subcommand)]
 enum ProfileAction {
-    /// List all saved connection profiles
+    /// 列出所有已保存的连接配置
     List,
 
-    /// Add or update a connection profile
+    /// 添加或更新连接配置
     Add {
-        /// Profile name (e.g., DEV, QAS, PRD)
+        /// 配置名称（例如 DEV、QAS、PRD）
         name: String,
 
-        /// SAP system base URL
+        /// SAP 系统基础 URL
         #[arg(long)]
         url: String,
 
-        /// SAP client number
+        /// SAP 客户端编号
         #[arg(long, default_value = "100")]
         client: String,
 
-        /// Language key
+        /// 语言代码
         #[arg(long, default_value = "EN")]
         language: String,
 
-        /// Username (not needed for --sso)
+        /// 用户名（使用 --sso 时不需要）
         #[arg(long, default_value = "")]
         user: String,
 
-        /// Password (not needed for --sso; stored in OS keyring by default)
+        /// 密码（使用 --sso 时不需要；默认存入操作系统凭据库）
         #[arg(long, default_value = "")]
         password: String,
 
-        /// Use Windows SSO (SPNEGO/Kerberos) — no username/password needed
+        /// 使用 Windows SSO（SPNEGO/Kerberos），无需用户名和密码
         #[arg(long)]
         sso: bool,
 
-        /// Allow Kerberos delegation when --sso is set (server can impersonate
-        /// the user to downstream backends). Off by default; only enable for
-        /// reverse-proxy → Gateway → backend R/3 setups that need multi-hop auth.
+        /// 启用 --sso 时允许 Kerberos 委派（服务器可使用用户身份访问下游后端）。
+        /// 默认关闭；仅在反向代理 → Gateway → 后端 R/3 需要多跳认证时启用。
         #[arg(long)]
         sso_delegate: bool,
 
-        /// Store password in config file instead of OS keyring (not recommended)
+        /// 将密码存入配置文件而不是操作系统凭据库（不推荐）
         #[arg(long)]
         plaintext: bool,
 
-        /// Create portable config next to the executable
+        /// 在可执行文件旁创建便携式配置
         #[arg(long)]
         portable: bool,
 
-        /// Landscape tier: DEV, QAS or PRD (`none` clears it). PRD
-        /// profiles are marked in the desktop app and noted on stderr.
-        /// Omitted on a re-run: the current value is kept.
+        /// 系统环境：DEV、QAS 或 PRD（none 用于清除）。PRD 配置会在桌面应用中标记，
+        /// 并在标准错误中提示。更新配置时省略此参数会保留原值。
         #[arg(long = "env", value_name = "DEV|QAS|PRD")]
         environment: Option<String>,
     },
 
-    /// Remove a connection profile
+    /// 删除连接配置
     Remove {
-        /// Profile name to remove
+        /// 要删除的配置名称
         name: String,
     },
 
-    /// Test a connection profile
+    /// 测试连接配置
     Test {
-        /// Profile name to test
+        /// 要测试的配置名称
         name: String,
     },
 
-    /// Show where the config file is located
+    /// 显示配置文件所在位置
     Where,
 }
 
 #[derive(Subcommand)]
 enum AliasAction {
-    /// List all aliases for a profile
+    /// 列出连接配置的所有别名
     List,
 
-    /// Add or update a service alias
+    /// 添加或更新服务别名
     Add {
-        /// Short name (e.g., warehouse, orders)
+        /// 别名（例如 warehouse、orders）
         name: String,
 
-        /// Full OData service path
+        /// 完整的 OData 服务路径
         path: String,
     },
 
-    /// Remove a service alias
+    /// 删除服务别名
     Remove {
-        /// Alias name to remove
+        /// 要删除的别名
         name: String,
     },
 }
@@ -623,7 +582,7 @@ async fn main() -> Result<()> {
     // `-p` naming an offline bucket: metadata commands read the cached
     // EDMX — no connection, no network.
     if let Some(ref name) = cli.profile {
-        let (cfg, config_dir) = config::load_config().context("loading config")?;
+        let (cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
         if cfg.offline_profiles.contains_key(name) && !cfg.connections.contains_key(name) {
             return run_offline_bucket_command(&cli, &cfg, &config_dir.path, name).await;
         }
@@ -632,19 +591,19 @@ async fn main() -> Result<()> {
     // Resolve connection: profile → env vars → CLI flags
     let connection = resolve_connection(&cli)?;
     let uses_browser_sso = matches!(&connection.auth, AuthConfig::Browser);
-    let sap_client = SapClient::new(connection).context("failed to create SAP client")?;
+    let sap_client = SapClient::new(connection).context("创建 SAP 客户端失败")?;
 
     // For Browser SSO profiles, try to load persisted cookies from keyring.
     // If none are present, fail early with a clear message.
     if uses_browser_sso && let Some(ref profile_name) = cli.profile {
         let loaded = sap_client
             .try_load_persisted_session(profile_name)
-            .context("failed to load persisted session")?;
+            .context("读取已保存的会话失败")?;
         if !loaded {
             anyhow::bail!(
-                "Browser SSO profile '{}' has no active session.\n\
-                     Open the desktop app, select this profile and click 'Sign In',\n\
-                     then re-run your command.",
+                "Browser SSO 配置 '{}' 没有有效会话。\n\
+                     请打开桌面应用，选择此配置并点击“登录”，\n\
+                     然后重新运行命令。",
                 profile_name
             );
         }
@@ -657,7 +616,7 @@ async fn main() -> Result<()> {
         let require_service = || -> Result<String> {
             resolved_service
                 .clone()
-                .ok_or_else(|| anyhow::anyhow!("--service / -s is required for this command"))
+                .ok_or_else(|| anyhow::anyhow!("此命令需要指定 --service / -s"))
         };
 
         match &cli.command {
@@ -733,7 +692,7 @@ async fn main() -> Result<()> {
                 let meta = sap_client
                     .fetch_metadata(&svc)
                     .await
-                    .context("failed to fetch metadata")?;
+                    .context("获取元数据失败")?;
                 let combined = combine_filter_with_in(filter.clone(), in_values)?;
                 let query = build_query(
                     entity_set,
@@ -793,7 +752,7 @@ async fn main() -> Result<()> {
                     let svc = require_service()?;
                     let connected_profile = cli.profile.clone().ok_or_else(|| {
                         anyhow::anyhow!(
-                            "`offline save` requires `-p PROFILE` so the captured bytes can be attributed to a connected system"
+                            "`offline save` 需要指定 `-p PROFILE`，以便将保存的元数据关联到对应的连接系统"
                         )
                     })?;
                     cmd_offline_save(
@@ -814,7 +773,7 @@ async fn main() -> Result<()> {
                     // we reach here, the early-exit was skipped —
                     // that's a logic bug, not user error.
                     unreachable!(
-                        "offline import/list/delete should have early-exited before connection resolution"
+                        "offline import/list/delete 应在连接解析前提前处理"
                     );
                 }
             },
@@ -836,7 +795,7 @@ fn emit_http_trace(client: &SapClient) {
     }
 
     eprintln!();
-    eprintln!("HTTP trace ({} exchange(s)):", trace.len());
+    eprintln!("HTTP 请求跟踪（{} 次交互）：", trace.len());
     for entry in &trace {
         emit_http_trace_entry(entry);
     }
@@ -846,35 +805,35 @@ fn emit_http_trace_entry(entry: &HttpTraceEntry) {
     let status = entry
         .status
         .map(|status| status.to_string())
-        .unwrap_or_else(|| "ERR".to_string());
+        .unwrap_or_else(|| "错误".to_string());
 
     eprintln!();
     eprintln!("[{}] {} {}", entry.id, entry.method, entry.url);
-    eprintln!("  status: {status}    time: {}ms", entry.duration_ms);
+    eprintln!("  状态：{status}    耗时：{} 毫秒", entry.duration_ms);
 
     if let Some(location) = &entry.redirect_location {
-        eprintln!("  redirect: {location}");
+        eprintln!("  重定向：{location}");
     }
     if let Some(error) = &entry.error {
-        eprintln!("  transport error: {error}");
+        eprintln!("  传输错误：{error}");
     }
 
     if !entry.request_headers.is_empty() {
-        eprintln!("  request headers:");
+        eprintln!("  请求标头：");
         for header in &entry.request_headers {
             eprintln!("    {}: {}", header.name, header.value);
         }
     }
 
     if !entry.response_headers.is_empty() {
-        eprintln!("  response headers:");
+        eprintln!("  响应标头：");
         for header in &entry.response_headers {
             eprintln!("    {}: {}", header.name, header.value);
         }
     }
 
     if let Some(body) = entry.response_body_preview.as_deref() {
-        eprintln!("  response preview:");
+        eprintln!("  响应预览：");
         for line in body.lines() {
             eprintln!("    {line}");
         }
@@ -886,18 +845,18 @@ fn emit_http_trace_entry(entry: &HttpTraceEntry) {
 fn resolve_connection(cli: &Cli) -> Result<SapConnection> {
     // If a profile is specified, load it as the base
     let (profile_conn, profile_name) = if let Some(ref name) = cli.profile {
-        let (cfg, _) = config::load_config().context("failed to load config")?;
+        let (cfg, _) = config::load_config().context("加载配置文件失败")?;
         let profile = cfg.connections.get(name).ok_or_else(|| {
             anyhow::anyhow!(
-                "profile '{}' not found. Run 'sap-odata profile list' to see available profiles.",
+                "找不到连接配置 '{}'。运行 'sap-odata profile list' 查看可用配置。",
                 name
             )
         })?;
         if profile.environment.as_deref() == Some("PRD") {
-            eprintln!("  \u{26a0} '{name}' is a production (PRD) system");
+            eprintln!("  \u{26a0} '{name}' 是生产环境（PRD）系统");
         }
         let conn = config::resolve_connection(name, profile)
-            .with_context(|| format!("failed to resolve profile '{name}'"))?;
+            .with_context(|| format!("解析连接配置 '{name}' 失败"))?;
         (Some(conn), Some(name.clone()))
     } else {
         (None, None)
@@ -910,9 +869,9 @@ fn resolve_connection(cli: &Cli) -> Result<SapConnection> {
         .or_else(|| profile_conn.as_ref().map(|c| c.base_url.clone()))
         .ok_or_else(|| {
             anyhow::anyhow!(
-                "no SAP URL specified. Use --url, SAP_BASE_URL env, or --profile.{}",
+                "未指定 SAP URL。请使用 --url、SAP_BASE_URL 环境变量或 --profile。{}",
                 if profile_name.is_none() {
-                    " Run 'sap-odata profile list' to see saved profiles."
+                    " 运行 'sap-odata profile list' 查看已保存的连接配置。"
                 } else {
                     ""
                 }
@@ -964,7 +923,7 @@ fn resolve_connection(cli: &Cli) -> Result<SapConnection> {
             })
         })
         .ok_or_else(|| {
-            anyhow::anyhow!("no username specified. Use --user, SAP_USER env, --profile, or --sso.")
+            anyhow::anyhow!("未指定用户名。请使用 --user、SAP_USER 环境变量、--profile 或 --sso。")
         })?;
 
     let password = cli
@@ -978,7 +937,7 @@ fn resolve_connection(cli: &Cli) -> Result<SapConnection> {
         })
         .ok_or_else(|| {
             anyhow::anyhow!(
-                "no password specified. Use --password, SAP_PASSWORD env, --profile, or --sso."
+                "未指定密码。请使用 --password、SAP_PASSWORD 环境变量、--profile 或 --sso。"
             )
         })?;
 
@@ -1009,13 +968,13 @@ async fn resolve_service_path(cli: &Cli, sap_client: &SapClient) -> Result<Optio
 
     // Try profile aliases first
     if let Some(ref profile_name) = cli.profile {
-        let (cfg, _) = config::load_config().context("failed to load config")?;
+        let (cfg, _) = config::load_config().context("加载配置文件失败")?;
         if let Some(profile) = cfg.connections.get(profile_name) {
             // Case-insensitive alias lookup
             let alias_lower = raw.to_lowercase();
             for (alias_name, alias_path) in &profile.aliases {
                 if alias_name.to_lowercase() == alias_lower {
-                    eprintln!("  Resolved alias '{}' -> {}", raw, alias_path);
+                    eprintln!("  已解析别名 '{}' -> {}", raw, alias_path);
                     return Ok(Some(alias_path.clone()));
                 }
             }
@@ -1025,14 +984,14 @@ async fn resolve_service_path(cli: &Cli, sap_client: &SapClient) -> Result<Optio
     // Try catalog resolution (searches V2 + V4 by technical name).
     // Banner goes to stderr so `metadata > out.xml` and similar
     // redirects capture only the data on stdout.
-    eprintln!("  Resolving service '{}'...", raw);
+    eprintln!("  正在解析服务 '{}'...", raw);
     match sap_odata_core::catalog::resolve_service_by_name(sap_client, &raw).await {
         Ok(path) => {
-            eprintln!("  Resolved '{}' -> {}", raw, path);
+            eprintln!("  已解析服务 '{}' -> {}", raw, path);
             Ok(Some(path))
         }
         Err(e) => Err(anyhow::anyhow!(
-            "could not resolve service '{}': {}. Use a full path starting with / or add an alias.",
+            "无法解析服务 '{}'：{}。请使用完整服务路径，或添加服务别名。",
             raw,
             e
         )),
@@ -1047,7 +1006,7 @@ fn handle_alias_command(
     json: bool,
 ) -> Result<()> {
     let profile_name = profile_name
-        .ok_or_else(|| anyhow::anyhow!("--profile / -p is required for alias commands"))?;
+        .ok_or_else(|| anyhow::anyhow!("别名命令需要指定 --profile / -p"))?;
 
     match action {
         AliasAction::List => cmd_alias_list(profile_name, json),
@@ -1057,11 +1016,11 @@ fn handle_alias_command(
 }
 
 fn cmd_alias_list(profile_name: &str, json: bool) -> Result<()> {
-    let (cfg, _) = config::load_config().context("failed to load config")?;
+    let (cfg, _) = config::load_config().context("加载配置文件失败")?;
     let profile = cfg
         .connections
         .get(profile_name)
-        .ok_or_else(|| anyhow::anyhow!("profile '{}' not found", profile_name))?;
+        .ok_or_else(|| anyhow::anyhow!("找不到连接配置 '{}'", profile_name))?;
 
     if json {
         let entries: Vec<_> = profile
@@ -1075,7 +1034,7 @@ fn cmd_alias_list(profile_name: &str, json: bool) -> Result<()> {
 
     if profile.aliases.is_empty() {
         println!(
-            "No aliases for profile '{}'. Use 'sap-odata -p {} alias add <name> <path>' to create one.",
+            "连接配置 '{}' 尚无服务别名。使用 'sap-odata -p {} alias add <名称> <路径>' 添加。",
             profile_name, profile_name
         );
         return Ok(());
@@ -1084,8 +1043,8 @@ fn cmd_alias_list(profile_name: &str, json: bool) -> Result<()> {
     let mut table = Table::new();
     table.load_style(UTF8_FULL);
     table.set_header(vec![
-        Cell::new("Alias").fg(Color::DarkCyan),
-        Cell::new("Service Path").fg(Color::DarkCyan),
+        Cell::new("别名").fg(Color::DarkCyan),
+        Cell::new("服务路径").fg(Color::DarkCyan),
     ]);
 
     for (name, path) in &profile.aliases {
@@ -1097,42 +1056,41 @@ fn cmd_alias_list(profile_name: &str, json: bool) -> Result<()> {
 }
 
 fn cmd_alias_add(profile_name: &str, alias_name: &str, service_path: &str) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
     let profile = cfg
         .connections
         .get_mut(profile_name)
-        .ok_or_else(|| anyhow::anyhow!("profile '{}' not found", profile_name))?;
+        .ok_or_else(|| anyhow::anyhow!("找不到连接配置 '{}'", profile_name))?;
 
     profile
         .aliases
         .insert(alias_name.to_string(), service_path.to_string());
     config::save_connections(&cfg, &config_dir.path)?;
     println!(
-        "  Alias '{}' -> {} saved for profile '{}'.",
-        alias_name, service_path, profile_name
+        "  已为连接配置 '{}' 保存别名 '{}' -> {}。",
+        profile_name, alias_name, service_path
     );
     Ok(())
 }
 
 fn cmd_alias_remove(profile_name: &str, alias_name: &str) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
     let profile = cfg
         .connections
         .get_mut(profile_name)
-        .ok_or_else(|| anyhow::anyhow!("profile '{}' not found", profile_name))?;
+        .ok_or_else(|| anyhow::anyhow!("找不到连接配置 '{}'", profile_name))?;
 
     if profile.aliases.remove(alias_name).is_none() {
         anyhow::bail!(
-            "alias '{}' not found in profile '{}'",
-            alias_name,
-            profile_name
+            "连接配置 '{}' 中找不到别名 '{}'",
+            profile_name, alias_name
         );
     }
 
     config::save_connections(&cfg, &config_dir.path)?;
     println!(
-        "  Alias '{}' removed from profile '{}'.",
-        alias_name, profile_name
+        "  已从连接配置 '{}' 中删除别名 '{}'。",
+        profile_name, alias_name
     );
     Ok(())
 }
@@ -1149,18 +1107,18 @@ async fn cmd_setup_wizard() -> Result<()> {
     let theme = ColorfulTheme::default();
 
     println!();
-    println!("SAP OData Explorer — profile setup wizard");
+    println!("SAP OData 浏览器——连接配置向导");
     println!("─────────────────────────────────────────");
     println!();
 
     // Profile name
     let name: String = Input::with_theme(&theme)
-        .with_prompt("Profile name (e.g. DEV, QAS, PRD)")
+        .with_prompt("连接配置名称（例如 DEV、QAS、PRD）")
         .validate_with(|input: &String| -> std::result::Result<(), &str> {
             if input.trim().is_empty() {
-                Err("Name cannot be empty")
+                Err("名称不能为空")
             } else if input.contains(|c: char| c.is_whitespace() || c == '/' || c == '\\') {
-                Err("Name cannot contain whitespace or slashes")
+                Err("名称不能包含空白字符或斜杠")
             } else {
                 Ok(())
             }
@@ -1174,7 +1132,7 @@ async fn cmd_setup_wizard() -> Result<()> {
     // helper as `cmd_profile_add` and Tauri `add_profile`.
     {
         let (cfg_for_check, _) =
-            config::load_config().context("failed to load config for name check")?;
+            config::load_config().context("读取配置文件以检查名称失败")?;
         if let Err(msg) = offline::check_connected_profile_name_available(&name, &cfg_for_check) {
             anyhow::bail!("{msg}");
         }
@@ -1182,10 +1140,10 @@ async fn cmd_setup_wizard() -> Result<()> {
 
     // Base URL
     let url: String = Input::with_theme(&theme)
-        .with_prompt("SAP base URL (e.g. https://sap.example.com or https://host:44300)")
+        .with_prompt("SAP 基础 URL（例如 https://sap.example.com 或 https://host:44300）")
         .validate_with(|input: &String| -> std::result::Result<(), &str> {
             if !input.starts_with("http://") && !input.starts_with("https://") {
-                Err("URL must start with http:// or https://")
+                Err("URL 必须以 http:// 或 https:// 开头")
             } else {
                 Ok(())
             }
@@ -1195,24 +1153,24 @@ async fn cmd_setup_wizard() -> Result<()> {
 
     // Client
     let client: String = Input::with_theme(&theme)
-        .with_prompt("SAP client")
+        .with_prompt("SAP 客户端编号")
         .default("100".to_string())
         .interact_text()?;
 
     // Language
     let language: String = Input::with_theme(&theme)
-        .with_prompt("Language key")
+        .with_prompt("语言代码")
         .default("EN".to_string())
         .interact_text()?;
 
     // Auth method
     let auth_modes = &[
-        "Basic (username + password)",
-        "Windows SSO (Kerberos / SPNEGO)",
-        "Browser SSO (Azure AD / SAP IAS / SAML)",
+        "Basic（用户名 + 密码）",
+        "Windows SSO（Kerberos / SPNEGO）",
+        "浏览器 SSO（Azure AD / SAP IAS / SAML）",
     ];
     let auth_idx = Select::with_theme(&theme)
-        .with_prompt("Authentication method")
+        .with_prompt("认证方式")
         .items(auth_modes)
         .default(0)
         .interact()?;
@@ -1220,10 +1178,10 @@ async fn cmd_setup_wizard() -> Result<()> {
     let (username, password, sso, browser_sso) = match auth_idx {
         0 => {
             let user: String = Input::with_theme(&theme)
-                .with_prompt("Username")
+                .with_prompt("用户名")
                 .interact_text()?;
             let pass = Password::with_theme(&theme)
-                .with_prompt("Password")
+                .with_prompt("密码")
                 .interact()?;
             (user.trim().to_string(), pass, false, false)
         }
@@ -1231,19 +1189,19 @@ async fn cmd_setup_wizard() -> Result<()> {
         2 => {
             println!();
             println!(
-                "  Browser SSO needs a one-time sign-in from the desktop app or VS Code extension."
+                "  Browser SSO 需要先在桌面应用或 VS Code 扩展中登录一次。"
             );
-            println!("  After signing in there once, this CLI profile will work too —");
-            println!("  cookies are stored securely in the OS keyring.");
+            println!("  登录后，此 CLI 配置也可以使用——");
+            println!("  会话 Cookie 将安全地保存在操作系统凭据库中。");
             println!();
             (String::new(), String::new(), false, true)
         }
         _ => unreachable!(),
     };
 
-    let env_choices = ["(none)", "DEV", "QAS", "PRD"];
+    let env_choices = ["（无）", "DEV", "QAS", "PRD"];
     let env_idx = Select::with_theme(&theme)
-        .with_prompt("Environment (marks production systems)")
+        .with_prompt("系统环境（用于标记生产系统）")
         .items(env_choices)
         .default(0)
         .interact()?;
@@ -1272,16 +1230,16 @@ async fn cmd_setup_wizard() -> Result<()> {
     // Store password in keyring if Basic auth
     if auth_idx == 0 {
         match config::set_password_in_keyring(&name, &username, &password) {
-            Ok(()) => println!("  Password stored in OS keyring."),
+            Ok(()) => println!("  密码已保存到操作系统凭据库。"),
             Err(e) => {
-                println!("  Warning: could not store password in OS keyring: {e}");
-                println!("  (Re-run the wizard or set SAP_PASSWORD env var to use this profile.)");
+                println!("  警告：无法将密码保存到操作系统凭据库：{e}");
+                println!("  （请重新运行向导，或设置 SAP_PASSWORD 环境变量以使用此配置。）");
             }
         }
     }
 
     // Save config
-    let (mut cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
 
     // If the connection fingerprint changed (url/client/language), discard any
     // persisted Browser SSO session so we don't replay cookies to a different target.
@@ -1293,11 +1251,11 @@ async fn cmd_setup_wizard() -> Result<()> {
         &client,
         &language,
     ) {
-        Ok(true) => println!("  Connection changed — cleared stale Browser SSO session."),
+        Ok(true) => println!("  连接信息已更改，已清除过期的 Browser SSO 会话。"),
         Ok(false) => {}
         Err(e) => println!(
-            "  Warning: connection changed but could not clear stale session ({e}). \
-             Re-sign-in may be required; consider 'sap-odata signout {name}'."
+            "  警告：连接信息已更改，但无法清除过期会话（{e}）。\
+             可能需要重新登录；可尝试运行 'sap-odata signout {name}'。"
         ),
     }
 
@@ -1310,16 +1268,16 @@ async fn cmd_setup_wizard() -> Result<()> {
     };
 
     println!();
-    println!("  Profile '{}' saved to {}", name, save_path.display());
+    println!("  连接配置 '{}' 已保存至 {}", name, save_path.display());
 
     // Offer to test the connection (except for Browser SSO which needs a webview)
     if !browser_sso {
         let do_test = Confirm::with_theme(&theme)
-            .with_prompt("Test connection now?")
+            .with_prompt("现在测试连接吗？")
             .default(true)
             .interact()?;
         if do_test {
-            println!("  Testing connection...");
+            println!("  正在测试连接...");
             let conn = SapConnection {
                 base_url: url,
                 client,
@@ -1337,18 +1295,18 @@ async fn cmd_setup_wizard() -> Result<()> {
                     .ensure_session("/sap/opu/odata/IWFND/CATALOGSERVICE;v=2")
                     .await
                 {
-                    Ok(()) => println!("  Connection OK."),
-                    Err(e) => println!("  Connection test failed: {e}"),
+                    Ok(()) => println!("  连接成功。"),
+                    Err(e) => println!("  连接测试失败：{e}"),
                 },
-                Err(e) => println!("  Could not create client: {e}"),
+                Err(e) => println!("  无法创建客户端：{e}"),
             }
         }
     } else {
         println!();
-        println!("  Next step: open the desktop app, select this profile, and click Sign In.");
-        println!("  After signing in there, CLI commands like");
+        println!("  下一步：打开桌面应用，选择此配置并点击“登录”。");
+        println!("  登录后即可在此终端中使用 CLI 命令，例如：");
         println!("    sap-odata -p {name} services");
-        println!("  will work from this terminal too.");
+        println!("  之后即可在此终端中使用。");
     }
 
     println!();
@@ -1361,8 +1319,8 @@ async fn cmd_setup_wizard() -> Result<()> {
 
 fn cmd_signout(name: &str) -> Result<()> {
     sap_odata_core::session::clear(name)
-        .with_context(|| format!("failed to clear session for '{name}'"))?;
-    println!("  Cleared persisted Browser SSO session for profile '{name}'.");
+        .with_context(|| format!("清除连接配置 '{name}' 的会话失败"))?;
+    println!("  已清除连接配置 '{name}' 保存的 Browser SSO 会话。");
     Ok(())
 }
 
@@ -1412,24 +1370,24 @@ fn profile_password_source(
     // surface a misleading "keyring error" on a profile that legitimately
     // has no password at all.
     if profile.browser_sso {
-        ("browser_sso", "Browser SSO")
+        ("browser_sso", "浏览器 SSO")
     } else if profile.sso {
-        ("sso", "SSO (Windows)")
+        ("sso", "SSO（Windows）")
     } else if profile.password.is_some() {
-        ("plaintext", "config (plaintext)")
+        ("plaintext", "配置文件（明文）")
     } else {
         match config::try_get_password_from_keyring(name, &profile.username) {
-            Ok(Some(_)) => ("keyring", "OS keyring"),
-            Ok(None) => ("not_set", "NOT SET"),
-            Err(config::KeyringReadError::Locked(_)) => ("keyring_locked", "keyring locked"),
-            Err(config::KeyringReadError::Corrupt(_)) => ("keyring_corrupt", "keyring corrupt"),
-            Err(config::KeyringReadError::Backend(_)) => ("keyring_error", "keyring error"),
+            Ok(Some(_)) => ("keyring", "操作系统凭据库"),
+            Ok(None) => ("not_set", "未设置"),
+            Err(config::KeyringReadError::Locked(_)) => ("keyring_locked", "凭据库已锁定"),
+            Err(config::KeyringReadError::Corrupt(_)) => ("keyring_corrupt", "凭据已损坏"),
+            Err(config::KeyringReadError::Backend(_)) => ("keyring_error", "凭据库错误"),
         }
     }
 }
 
 fn cmd_profile_list(json: bool) -> Result<()> {
-    let (cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
 
     if json {
         let entries: Vec<_> = cfg
@@ -1462,20 +1420,20 @@ fn cmd_profile_list(json: bool) -> Result<()> {
     }
 
     if cfg.connections.is_empty() {
-        println!("No profiles saved yet. Use 'sap-odata profile add' to create one.");
+        println!("尚未保存连接配置。使用 'sap-odata profile add' 添加配置。");
         return Ok(());
     }
 
     let mut table = Table::new();
     table.load_style(UTF8_FULL);
     table.set_header(vec![
-        Cell::new("Profile").fg(Color::DarkCyan),
-        Cell::new("Env").fg(Color::DarkCyan),
-        Cell::new("URL").fg(Color::DarkCyan),
-        Cell::new("Client").fg(Color::DarkCyan),
-        Cell::new("Language").fg(Color::DarkCyan),
-        Cell::new("User").fg(Color::DarkCyan),
-        Cell::new("Password").fg(Color::DarkCyan),
+        Cell::new("配置").fg(Color::DarkCyan),
+        Cell::new("环境").fg(Color::DarkCyan),
+        Cell::new("地址").fg(Color::DarkCyan),
+        Cell::new("客户端").fg(Color::DarkCyan),
+        Cell::new("语言").fg(Color::DarkCyan),
+        Cell::new("用户").fg(Color::DarkCyan),
+        Cell::new("密码").fg(Color::DarkCyan),
     ]);
 
     for (name, profile) in &cfg.connections {
@@ -1494,9 +1452,9 @@ fn cmd_profile_list(json: bool) -> Result<()> {
             Cell::new(&profile.client),
             Cell::new(&profile.language),
             Cell::new(if profile.browser_sso {
-                "(Browser)"
+                "（浏览器 SSO）"
             } else if profile.sso {
-                "(SSO)"
+                "（SSO）"
             } else {
                 &profile.username
             }),
@@ -1506,11 +1464,11 @@ fn cmd_profile_list(json: bool) -> Result<()> {
 
     println!("{table}");
     let mode = if config_dir.is_portable {
-        "portable"
+        "便携式"
     } else {
-        "user"
+        "用户"
     };
-    println!("\n  Config: {} ({})\n", config_dir.path.display(), mode);
+    println!("\n  配置目录：{}（{}）\n", config_dir.path.display(), mode);
 
     Ok(())
 }
@@ -1534,7 +1492,7 @@ fn cmd_profile_add(
         .map(config::normalize_environment)
         .transpose()
         .map_err(|e| anyhow::anyhow!(e))?;
-    let (mut cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
 
     // Global name-uniqueness check (step 7's connected-side enforcement).
     // Shared core helper so this path and `cmd_setup_wizard` and the
@@ -1559,11 +1517,11 @@ fn cmd_profile_add(
         client,
         language,
     ) {
-        Ok(true) => println!("  Connection changed — cleared stale Browser SSO session."),
+        Ok(true) => println!("  连接信息已更改，已清除过期的 Browser SSO 会话。"),
         Ok(false) => {}
         Err(e) => println!(
-            "  Warning: connection changed but could not clear stale session ({e}). \
-             Re-sign-in may be required; consider 'sap-odata signout {name}'."
+            "  警告：连接信息已更改，但无法清除过期会话（{e}）。\
+             可能需要重新登录；可尝试运行 'sap-odata signout {name}'。"
         ),
     }
 
@@ -1616,19 +1574,19 @@ fn cmd_profile_add(
     } else if !password.is_empty() && !plaintext {
         if let Err(e) = config::set_password_in_keyring(name, user, password) {
             anyhow::bail!(
-                "could not store password in OS keyring: {e}
-                 Re-run with --plaintext to store the password in the config file instead                  (not recommended), or fix the keyring backend and retry."
+                "无法将密码保存到操作系统凭据库：{e}
+                 请使用 --plaintext 将密码改为保存到配置文件（不推荐），或修复凭据库后重试。"
             );
         }
-        Some("Password stored in OS keyring.")
+        Some("密码已保存到操作系统凭据库。")
     } else if !password.is_empty() {
-        Some("Password stored in the config file (plaintext).")
+        Some("密码已以明文形式保存到配置文件。")
     } else if carry.plaintext_password.is_some() {
-        Some("Password unchanged (kept in the config file).")
+        Some("密码未更改（保留配置文件中的密码）。")
     } else if same_basic_user {
-        Some("Password unchanged (existing keyring entry kept).")
+        Some("密码未更改（保留凭据库中的现有密码）。")
     } else {
-        Some("No password stored — pass --password, or set SAP_PASSWORD when running commands.")
+        Some("尚未保存密码——请使用 --password，或运行命令时设置 SAP_PASSWORD。")
     };
 
     cfg.connections.insert(name.to_string(), profile);
@@ -1648,21 +1606,21 @@ fn cmd_profile_add(
     // After the save, so a failed save never loses the old credential.
     if let Some(old_user) = carry.orphaned_keyring_user.as_deref() {
         match config::delete_password_from_keyring(name, old_user) {
-            Ok(()) => println!("  Removed the previous keyring entry (user: {old_user})."),
+            Ok(()) => println!("  已删除旧的凭据库条目（用户：{old_user}）。"),
             Err(e) => println!(
-                "  Warning: could not remove the previous keyring entry (user: {old_user}): {e}"
+                "  警告：无法删除旧的凭据库条目（用户：{old_user}）：{e}"
             ),
         }
     }
     let mode = if sso {
-        " with SSO"
+        "（SSO）"
     } else if keep_browser {
-        " with Browser SSO"
+        "（Browser SSO）"
     } else {
         ""
     };
     println!(
-        "  Profile '{}' saved{mode} to {}",
+        "  连接配置 '{}' {mode}已保存至 {}",
         name,
         save_path.display()
     );
@@ -1670,11 +1628,11 @@ fn cmd_profile_add(
 }
 
 fn cmd_profile_remove(name: &str) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("failed to load config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
 
     let profile = cfg.connections.remove(name);
     if profile.is_none() {
-        anyhow::bail!("profile '{}' not found", name);
+        anyhow::bail!("找不到连接配置 '{}'", name);
     }
 
     let profile = profile.unwrap();
@@ -1685,58 +1643,58 @@ fn cmd_profile_remove(name: &str) -> Result<()> {
     if !profile.username.is_empty()
         && let Err(e) = config::delete_password_from_keyring(name, &profile.username)
     {
-        warnings.push(format!("password (user: {}) — {e}", profile.username));
+        warnings.push(format!("密码（用户：{}）——{e}", profile.username));
     }
     // Remove any persisted Browser SSO session — critical so that recreating
     // a profile with the same name doesn't resurrect the old session.
     if let Err(e) = sap_odata_core::session::clear(name) {
-        warnings.push(format!("Browser SSO session — {e}"));
+        warnings.push(format!("Browser SSO 会话——{e}"));
     }
 
     config::save_connections(&cfg, &config_dir.path)?;
 
     if warnings.is_empty() {
         println!(
-            "  Profile '{}' removed (credentials and session cleared).",
+            "  已删除连接配置 '{}'（凭据和会话均已清除）。",
             name
         );
     } else {
         println!(
-            "  Profile '{}' removed from config, but these items could NOT be cleared:",
+            "  已从配置文件中删除连接配置 '{}'，但以下项目未能清除：",
             name
         );
         for w in &warnings {
             println!("    - {w}");
         }
-        println!("  You may need to remove them manually from the OS credential store.");
+        println!("  你可能需要手动从操作系统凭据库中删除这些项目。");
     }
     Ok(())
 }
 
 async fn cmd_profile_test(name: &str) -> Result<()> {
-    let (cfg, _) = config::load_config().context("failed to load config")?;
+    let (cfg, _) = config::load_config().context("加载配置文件失败")?;
     let profile = cfg
         .connections
         .get(name)
-        .ok_or_else(|| anyhow::anyhow!("profile '{}' not found", name))?;
+        .ok_or_else(|| anyhow::anyhow!("找不到连接配置 '{}'", name))?;
 
     let connection = config::resolve_connection(name, profile)
-        .with_context(|| format!("failed to resolve profile '{name}'"))?;
+        .with_context(|| format!("解析连接配置 '{name}' 失败"))?;
 
     println!(
-        "  Testing connection to {} (client {})...",
+        "  正在测试与 {} 的连接（客户端 {}）...",
         connection.base_url, connection.client
     );
 
-    let client = SapClient::new(connection).context("failed to create SAP client")?;
+    let client = SapClient::new(connection).context("创建 SAP 客户端失败")?;
 
     // Try to establish a session
     client
         .ensure_session("/sap/opu/odata/IWFND/CATALOGSERVICE;v=2")
         .await
-        .context("connection test failed")?;
+        .context("连接测试失败")?;
 
-    println!("  Connection successful!");
+    println!("  连接成功！");
     Ok(())
 }
 
@@ -1757,15 +1715,15 @@ fn cmd_profile_where(json: bool) -> Result<()> {
 
     match config::find_config_dir() {
         Some(dir) => {
-            let mode = if dir.is_portable { "portable" } else { "user" };
-            println!("  Config directory: {} ({})", dir.path.display(), mode);
+            let mode = if dir.is_portable { "便携式" } else { "用户" };
+            println!("  配置目录：{}（{}）", dir.path.display(), mode);
         }
         None => {
             // Show where it would be created
             let dir = config::get_or_create_config_dir()?;
-            let mode = if dir.is_portable { "portable" } else { "user" };
+            let mode = if dir.is_portable { "便携式" } else { "用户" };
             println!(
-                "  Config directory: {} ({}, will be created on first use)",
+                "  配置目录：{}（{}，首次使用时创建）",
                 dir.path.display(),
                 mode
             );
@@ -1794,7 +1752,7 @@ fn combine_filter_with_in(filter: Option<String>, in_values: &[String]) -> Resul
     // defensive callers (and to keep the error specific).
     if in_values.len() < 2 {
         anyhow::bail!(
-            "--in needs a property name followed by one or more values (got {} arg(s))",
+            "--in 需要一个属性名称，后跟一个或多个值（当前收到 {} 个参数）",
             in_values.len()
         );
     }
@@ -1884,21 +1842,27 @@ async fn cmd_services(
 ) -> Result<()> {
     let result = sap_odata_core::catalog::fetch_service_catalog(client)
         .await
-        .context("failed to fetch service catalog")?;
+        .context("获取服务目录失败")?;
 
     // Nothing listed and at least one catalog failed (401, expired
     // session, DNS, 403 …): that is an error, not "no services". Same
     // rule as the desktop app. A partial result (e.g. V4 catalog not
     // published) still lists what was found, with warnings on stderr.
     if result.entries.is_empty() && !result.warnings.is_empty() {
+        let warnings = result
+            .warnings
+            .iter()
+            .map(localize_catalog_warning)
+            .collect::<Vec<_>>()
+            .join("；");
         anyhow::bail!(
-            "could not fetch the service catalog: {}",
-            result.warnings.join("; ")
+            "无法获取服务目录：{}",
+            warnings
         );
     }
 
     for w in &result.warnings {
-        eprintln!("  Warning: {w}");
+        eprintln!("  警告：{}", localize_catalog_warning(w));
     }
 
     let mut filtered: Vec<_> = result
@@ -1929,7 +1893,7 @@ async fn cmd_services(
     }
 
     if filtered.is_empty() {
-        println!("No services found.");
+        println!("没有找到服务。");
         return Ok(());
     }
 
@@ -1937,10 +1901,10 @@ async fn cmd_services(
     table.load_style(UTF8_FULL);
     table.set_header(vec![
         Cell::new("#").fg(Color::DarkCyan),
-        Cell::new("Ver").fg(Color::DarkCyan),
-        Cell::new("Technical Name").fg(Color::DarkCyan),
-        Cell::new("Title").fg(Color::DarkCyan),
-        Cell::new("Service URL").fg(Color::DarkCyan),
+        Cell::new("版本").fg(Color::DarkCyan),
+        Cell::new("技术名称").fg(Color::DarkCyan),
+        Cell::new("标题").fg(Color::DarkCyan),
+        Cell::new("服务 URL").fg(Color::DarkCyan),
     ]);
 
     for (i, entry) in filtered.iter().enumerate() {
@@ -1955,12 +1919,24 @@ async fn cmd_services(
 
     println!("{table}");
     if filtered.len() < total {
-        println!("\n  Showing {} of {} service(s)\n", filtered.len(), total);
+        println!("\n  显示 {} / {} 个服务\n", filtered.len(), total);
     } else {
-        println!("\n  {} service(s) found\n", total);
+        println!("\n  共找到 {} 个服务\n", total);
     }
 
     Ok(())
+}
+
+fn localize_catalog_warning(warning: &str) -> String {
+    for (english, chinese) in [
+        ("V2 catalog:", "V2 服务目录："),
+        ("V4 catalog:", "V4 服务目录："),
+    ] {
+        if let Some(detail) = warning.strip_prefix(english) {
+            return format!("{chinese}{}", detail.trim_start());
+        }
+    }
+    warning.to_string()
 }
 
 /// Where a metadata-only command reads `$metadata` from: the live
@@ -1990,7 +1966,7 @@ impl MetaSource<'_> {
             MetaSource::Live { client, service } => client
                 .fetch_metadata_xml(service)
                 .await
-                .context("failed to fetch metadata"),
+                .context("获取元数据失败"),
             MetaSource::Offline { xml, .. } => Ok(xml.clone()),
         }
     }
@@ -2000,9 +1976,9 @@ impl MetaSource<'_> {
             MetaSource::Live { client, service } => client
                 .fetch_metadata(service)
                 .await
-                .context("failed to fetch metadata"),
+                .context("获取元数据失败"),
             MetaSource::Offline { xml, .. } => {
-                sap_odata_core::metadata::parse_metadata(xml).context("cached EDMX did not parse")
+                sap_odata_core::metadata::parse_metadata(xml).context("解析缓存的 EDMX 失败")
             }
         }
     }
@@ -2030,18 +2006,18 @@ async fn run_offline_bucket_command(
     );
     if !metadata_only {
         anyhow::bail!(
-            "'{bucket}' is an offline profile (cached $metadata) — there is no SAP system to query. \
-             These commands work offline: services, entities, describe, functions, annotations, lint, metadata."
+            "'{bucket}' 是离线配置（缓存了 $metadata），无法连接 SAP 系统执行查询。\
+             以下命令支持离线运行：services、entities、describe、functions、annotations、lint、metadata。"
         );
     }
     let ident = cli.service.as_deref().ok_or_else(|| {
         anyhow::anyhow!(
-            "--service / -s is required: a service id or label from `sap-odata offline list --profile \"{bucket}\"`"
+            "必须指定 --service / -s：请使用 `sap-odata offline list --profile \"{bucket}\"` 中的服务 ID 或标签"
         )
     })?;
     let service_id = resolve_offline_service(cfg, bucket, ident)?;
     let xml = offline::read_offline_metadata(cfg, config_dir, bucket, &service_id)
-        .context("reading the cached EDMX")?;
+        .context("读取缓存的 EDMX 失败")?;
     let service_path = cfg
         .offline_services
         .iter()
@@ -2083,7 +2059,7 @@ fn resolve_offline_service(cfg: &config::ConfigFile, bucket: &str, ident: &str) 
     match MetadataSource::resolve(bucket, ident, cfg) {
         Ok(MetadataSource::Offline { service_id, .. }) => return Ok(service_id),
         Ok(MetadataSource::Connected { .. }) => {
-            anyhow::bail!("'{bucket}' is a connected profile, not an offline bucket")
+            anyhow::bail!("'{bucket}' 是连接配置，不是离线配置桶")
         }
         Err(MetadataSourceError::OfflineServiceNotFound { .. }) => {}
         Err(e) => return Err(e.into()),
@@ -2096,9 +2072,9 @@ fn resolve_offline_service(cfg: &config::ConfigFile, bucket: &str, ident: &str) 
     match by_label.as_slice() {
         [one] => Ok(one.id.clone()),
         [] => anyhow::bail!(
-            "no service '{ident}' in offline bucket '{bucket}'. Run `sap-odata offline list --profile \"{bucket}\"` to see ids and labels."
+            "离线配置桶 '{bucket}' 中没有服务 '{ident}'。运行 `sap-odata offline list --profile \"{bucket}\"` 查看服务 ID 和标签。"
         ),
-        _ => anyhow::bail!("'{ident}' matches several services in '{bucket}' — use the service id"),
+        _ => anyhow::bail!("'{ident}' 在 '{bucket}' 中匹配到多个服务，请使用服务 ID"),
     }
 }
 
@@ -2122,9 +2098,9 @@ async fn cmd_entities(src: &MetaSource<'_>, json: bool) -> Result<()> {
         table.load_style(UTF8_FULL);
         table.set_header(vec![
             Cell::new("#").fg(Color::DarkCyan),
-            Cell::new("Entity Set").fg(Color::DarkCyan),
-            Cell::new("Entity Type").fg(Color::DarkCyan),
-            Cell::new("Keys").fg(Color::DarkCyan),
+            Cell::new("实体集").fg(Color::DarkCyan),
+            Cell::new("实体类型").fg(Color::DarkCyan),
+            Cell::new("键").fg(Color::DarkCyan),
         ]);
 
         // Hide SAP V4 system entity sets from the table; --json (handled
@@ -2156,25 +2132,25 @@ async fn cmd_describe(src: &MetaSource<'_>, entity_set: &str, json: bool) -> Res
 
     let et = meta
         .entity_type_for_set(entity_set)
-        .ok_or_else(|| anyhow::anyhow!("entity set '{entity_set}' not found"))?;
+        .ok_or_else(|| anyhow::anyhow!("找不到实体集 '{entity_set}'"))?;
 
     if json {
         println!("{}", serde_json::to_string_pretty(&et)?);
         return Ok(());
     }
 
-    println!("\n  Entity Type: {}", et.name);
-    println!("  Keys: {}\n", et.keys.join(", "));
+    println!("\n  实体类型：{}", et.name);
+    println!("  键：{}\n", et.keys.join(", "));
 
     let mut prop_table = Table::new();
     prop_table.load_style(UTF8_FULL);
     prop_table.set_header(vec![
-        Cell::new("Property").fg(Color::DarkCyan),
-        Cell::new("Type").fg(Color::DarkCyan),
-        Cell::new("Key").fg(Color::DarkCyan),
-        Cell::new("Nullable").fg(Color::DarkCyan),
-        Cell::new("MaxLen").fg(Color::DarkCyan),
-        Cell::new("Label").fg(Color::DarkCyan),
+        Cell::new("属性").fg(Color::DarkCyan),
+        Cell::new("类型").fg(Color::DarkCyan),
+        Cell::new("键").fg(Color::DarkCyan),
+        Cell::new("可空").fg(Color::DarkCyan),
+        Cell::new("最大长度").fg(Color::DarkCyan),
+        Cell::new("标签").fg(Color::DarkCyan),
     ]);
 
     // Hide SAP V4 system fields (`SAP__Messages`, `__OperationControl`,
@@ -2190,7 +2166,7 @@ async fn cmd_describe(src: &MetaSource<'_>, entity_set: &str, json: bool) -> Res
             Cell::new(&p.name),
             Cell::new(&p.edm_type),
             Cell::new(is_key),
-            Cell::new(if p.nullable { "yes" } else { "no" }),
+            Cell::new(if p.nullable { "是" } else { "否" }),
             Cell::new(p.max_length.map(|l| l.to_string()).unwrap_or_default()),
             Cell::new(p.label.as_deref().unwrap_or("")),
         ]);
@@ -2203,13 +2179,13 @@ async fn cmd_describe(src: &MetaSource<'_>, entity_set: &str, json: bool) -> Res
         .filter(|(name, _, _)| !is_sap_system_field(name))
         .collect();
     if !nav_targets.is_empty() {
-        println!("\n  Navigation Properties:\n");
+        println!("\n  导航属性：\n");
         let mut nav_table = Table::new();
         nav_table.load_style(UTF8_FULL);
         nav_table.set_header(vec![
-            Cell::new("Nav Property").fg(Color::DarkCyan),
-            Cell::new("Target Type").fg(Color::DarkCyan),
-            Cell::new("Multiplicity").fg(Color::DarkCyan),
+            Cell::new("导航属性").fg(Color::DarkCyan),
+            Cell::new("目标类型").fg(Color::DarkCyan),
+            Cell::new("多重性").fg(Color::DarkCyan),
         ]);
         for (name, target, mult) in &nav_targets {
             nav_table.add_row(vec![Cell::new(name), Cell::new(target), Cell::new(mult)]);
@@ -2217,7 +2193,7 @@ async fn cmd_describe(src: &MetaSource<'_>, entity_set: &str, json: bool) -> Res
         println!("{nav_table}");
     }
 
-    println!("\n  Example query:");
+    println!("\n  查询示例：");
     // Skip SAP V4 system fields when picking example $select columns —
     // showing `SAP__Messages` in the example query would mislead the user.
     let select_fields: Vec<&str> = et
@@ -2233,7 +2209,7 @@ async fn cmd_describe(src: &MetaSource<'_>, entity_set: &str, json: bool) -> Res
     );
     if let Some(service) = src.service_path() {
         println!(
-            "  URL: {}/{}\n",
+            "  URL：{}/{}\n",
             service,
             ODataQuery::new(entity_set)
                 .select(&select_fields)
@@ -2255,7 +2231,7 @@ async fn cmd_functions(src: &MetaSource<'_>, json: bool) -> Result<()> {
     }
 
     if meta.function_imports.is_empty() {
-        println!("No function imports in this service.");
+        println!("此服务中没有函数导入。");
         return Ok(());
     }
 
@@ -2263,10 +2239,10 @@ async fn cmd_functions(src: &MetaSource<'_>, json: bool) -> Result<()> {
         let mut table = Table::new();
         table.load_style(UTF8_FULL);
         table.set_header(vec![
-            Cell::new("Function").fg(Color::DarkCyan),
-            Cell::new("Method").fg(Color::DarkCyan),
-            Cell::new("Return Type").fg(Color::DarkCyan),
-            Cell::new("Parameters").fg(Color::DarkCyan),
+            Cell::new("函数").fg(Color::DarkCyan),
+            Cell::new("方法").fg(Color::DarkCyan),
+            Cell::new("返回类型").fg(Color::DarkCyan),
+            Cell::new("参数").fg(Color::DarkCyan),
         ]);
 
         for fi in &meta.function_imports {
@@ -2296,7 +2272,7 @@ async fn cmd_run(
     let data = client
         .query_json(service, query)
         .await
-        .context("query execution failed")?;
+        .context("执行查询失败")?;
 
     if json_output {
         println!("{}", serde_json::to_string_pretty(&data)?);
@@ -2334,7 +2310,7 @@ async fn cmd_verify(
     let meta = client
         .fetch_metadata(service)
         .await
-        .context("failed to fetch metadata")?;
+        .context("获取元数据失败")?;
     let version = meta.version;
 
     // Skip SAP V4 framework sets (SAP__Messages, __OperationControl,
@@ -2351,7 +2327,7 @@ async fn cmd_verify(
         if json {
             println!("[]");
         } else {
-            println!("No entity sets to verify in this service.");
+            println!("此服务中没有可供验证的实体集。");
         }
         return Ok(());
     }
@@ -2363,7 +2339,7 @@ async fn cmd_verify(
                 set: (*set).to_string(),
                 status: VerifyStatus::Ok,
                 rows: None,
-                note: Some("not probed (--quick)".to_string()),
+                note: Some("未探测（--quick）".to_string()),
             });
             continue;
         }
@@ -2421,15 +2397,15 @@ async fn cmd_verify(
         let mut table = Table::new();
         table.load_style(UTF8_FULL);
         table.set_header(vec![
-            Cell::new("Entity Set").fg(Color::DarkCyan),
-            Cell::new("Status").fg(Color::DarkCyan),
-            Cell::new("Rows").fg(Color::DarkCyan),
-            Cell::new("Note").fg(Color::DarkCyan),
+            Cell::new("实体集").fg(Color::DarkCyan),
+            Cell::new("状态").fg(Color::DarkCyan),
+            Cell::new("行数").fg(Color::DarkCyan),
+            Cell::new("说明").fg(Color::DarkCyan),
         ]);
         for r in &results {
             let status_cell = match r.status {
-                VerifyStatus::Ok => Cell::new("OK").fg(Color::Green),
-                VerifyStatus::Fail => Cell::new("FAIL").fg(Color::Red),
+                VerifyStatus::Ok => Cell::new("成功").fg(Color::Green),
+                VerifyStatus::Fail => Cell::new("失败").fg(Color::Red),
             };
             let rows_cell = match r.rows {
                 Some(n) => Cell::new(n),
@@ -2450,11 +2426,10 @@ async fn cmd_verify(
             .count();
         let fail = results.len() - ok;
         eprintln!(
-            "\n  {} OK · {} FAIL ({} set{} probed)",
+            "\n  {} 成功 · {} 失败（已探测 {} 个实体集）",
             ok,
             fail,
-            results.len(),
-            if results.len() == 1 { "" } else { "s" }
+            results.len()
         );
     }
 
@@ -2468,7 +2443,7 @@ async fn cmd_verify(
             .iter()
             .filter(|r| matches!(r.status, VerifyStatus::Fail))
             .count();
-        anyhow::bail!("{fail} entity set(s) failed verification");
+        anyhow::bail!("{fail} 个实体集验证失败");
     }
     Ok(())
 }
@@ -2549,17 +2524,17 @@ async fn cmd_annotations(
     }
 
     if filtered.is_empty() {
-        println!("No annotations match the filters.");
+        println!("没有符合筛选条件的注解。");
         return Ok(());
     }
 
     let mut table = Table::new();
     table.load_style(UTF8_FULL).set_header(vec![
-        Cell::new("Namespace").fg(Color::Cyan),
-        Cell::new("Term").fg(Color::Cyan),
-        Cell::new("Target").fg(Color::Cyan),
-        Cell::new("Value").fg(Color::Cyan),
-        Cell::new("Qualifier").fg(Color::Cyan),
+        Cell::new("命名空间").fg(Color::Cyan),
+        Cell::new("术语").fg(Color::Cyan),
+        Cell::new("目标").fg(Color::Cyan),
+        Cell::new("值").fg(Color::Cyan),
+        Cell::new("限定符").fg(Color::Cyan),
     ]);
     for a in &filtered {
         table.add_row(vec![
@@ -2571,7 +2546,7 @@ async fn cmd_annotations(
         ]);
     }
     println!("{table}");
-    println!("\n{} annotation(s) shown.", filtered.len());
+    println!("\n共显示 {} 条注解。", filtered.len());
     Ok(())
 }
 
@@ -2590,7 +2565,7 @@ async fn cmd_lint(
         Some("warn") => Some(LintSeverity::Warn),
         Some("miss") => Some(LintSeverity::Miss),
         Some(other) => {
-            anyhow::bail!("unknown severity '{other}' — expected pass, warn, or miss");
+            anyhow::bail!("未知的严重级别 '{other}'——有效值为 pass、warn 或 miss");
         }
     };
     let fail_on_sev: Option<LintSeverity> = fail_on.map(Into::into);
@@ -2604,7 +2579,7 @@ async fn cmd_lint(
             } else if let Some(et) = meta.entity_type_for_set(name) {
                 vec![et.name.as_str()]
             } else {
-                anyhow::bail!("entity type or set '{name}' not found");
+                anyhow::bail!("找不到实体类型或实体集 '{name}'");
             }
         }
         None => meta
@@ -2637,7 +2612,7 @@ async fn cmd_lint(
     for name in &targets {
         let et = meta
             .find_entity_type(name)
-            .ok_or_else(|| anyhow::anyhow!("entity '{name}' vanished"))?;
+            .ok_or_else(|| anyhow::anyhow!("实体 '{name}' 不存在"))?;
         let detected_profile = lint::detect_profile(et);
         let effective_profile = profile_override.map(Into::into).unwrap_or(detected_profile);
         let mut findings = lint::evaluate_entity_type_with_profile(et, effective_profile);
@@ -2681,16 +2656,16 @@ async fn cmd_lint(
             // Even in JSON mode, --fail-on still drives the exit code.
             // We've already emitted the report so consumers can read
             // the findings; the bail just sets exit != 0.
-            anyhow::bail!("lint findings at or above --fail-on threshold are present",);
+            anyhow::bail!("存在达到 --fail-on 指定级别的 lint 结果");
         }
         return Ok(());
     }
 
     if reports.is_empty() {
-        println!("No findings at or above the requested severity.");
+        println!("没有达到指定严重级别的检查结果。");
         if fail_on_tripped {
             anyhow::bail!(
-                "lint findings at or above --fail-on threshold are present (filtered out by --min-severity)",
+                "存在达到 --fail-on 指定级别的 lint 结果（已被 --min-severity 筛选隐藏）",
             );
         }
         return Ok(());
@@ -2701,9 +2676,9 @@ async fn cmd_lint(
         let mut table = Table::new();
         table.load_style(UTF8_FULL).set_header(vec![
             Cell::new("").fg(Color::Cyan),
-            Cell::new("Category").fg(Color::Cyan),
-            Cell::new("Check").fg(Color::Cyan),
-            Cell::new("Message").fg(Color::Cyan),
+            Cell::new("类别").fg(Color::Cyan),
+            Cell::new("检查项").fg(Color::Cyan),
+            Cell::new("说明").fg(Color::Cyan),
         ]);
         for f in &r.findings {
             let (symbol, color) = match f.severity {
@@ -2716,7 +2691,7 @@ async fn cmd_lint(
             // from blowing out horizontally on actionable findings.
             let mut msg = f.message.clone();
             if let Some(cds) = f.suggested_cds {
-                msg.push_str("\nABAP CDS: ");
+                msg.push_str("\nABAP CDS 建议：");
                 msg.push_str(cds);
             }
             if let Some(why) = f.why_in_fiori {
@@ -2725,7 +2700,15 @@ async fn cmd_lint(
             }
             table.add_row(vec![
                 Cell::new(symbol).fg(color),
-                Cell::new(format!("{:?}", f.category).to_lowercase()),
+                Cell::new(match f.category {
+                    lint::LintCategory::Profile => "配置类型",
+                    lint::LintCategory::Identity => "身份标识",
+                    lint::LintCategory::ListReport => "列表报表",
+                    lint::LintCategory::Filtering => "筛选",
+                    lint::LintCategory::Fields => "字段",
+                    lint::LintCategory::Capabilities => "功能能力",
+                    lint::LintCategory::Integrity => "完整性",
+                }),
                 Cell::new(f.code),
                 Cell::new(msg),
             ]);
@@ -2733,7 +2716,7 @@ async fn cmd_lint(
         println!("{table}");
     }
     if fail_on_tripped {
-        anyhow::bail!("lint findings at or above --fail-on threshold are present");
+        anyhow::bail!("存在达到 --fail-on 指定级别的 lint 结果");
     }
     Ok(())
 }
@@ -2752,14 +2735,14 @@ async fn cmd_offline_save(
     note: Option<String>,
     json: bool,
 ) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("loading config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
     let base_url = cfg
         .connections
         .get(connected_profile_name)
         .map(|p| p.base_url.clone())
         .ok_or_else(|| {
             anyhow::anyhow!(
-                "Profile '{}' not found in connections.toml",
+                "connections.toml 中找不到连接配置 '{}'",
                 connected_profile_name
             )
         })?;
@@ -2788,7 +2771,7 @@ async fn cmd_offline_save(
         opts,
     )
     .await
-    .context("save_service_offline")?;
+    .context("保存服务到离线库失败")?;
 
     if json {
         let s = serde_json::to_string_pretty(&outcome)?;
@@ -2803,19 +2786,19 @@ async fn cmd_offline_save(
 fn render_offline_save_outcome(outcome: &SaveOutcome) {
     use offline::SaveKind;
     let header = match outcome.kind {
-        SaveKind::NewService => "Saved offline (new entry)",
-        SaveKind::OverwriteUpdatedBytes => "Saved offline (updated existing entry)",
-        SaveKind::SkippedByteIdentical => "Skipped — bytes identical to the existing entry",
+        SaveKind::NewService => "已保存到离线库（新条目）",
+        SaveKind::OverwriteUpdatedBytes => "已保存到离线库（更新现有条目）",
+        SaveKind::SkippedByteIdentical => "已跳过——文件内容与现有条目相同",
     };
     println!("{header}");
-    println!("  profile:        {}", outcome.offline_profile_name);
-    println!("  service id:     {}", outcome.service_id);
-    println!("  edmx file:      {}", outcome.edmx_file);
-    println!("  odata version:  {:?}", outcome.odata_version);
-    println!("  sha256:         {}", outcome.sha256);
-    println!("  size:           {} bytes", outcome.size_bytes);
+    println!("  配置：          {}", outcome.offline_profile_name);
+    println!("  服务 ID：       {}", outcome.service_id);
+    println!("  EDMX 文件：     {}", outcome.edmx_file);
+    println!("  OData 版本：    {:?}", outcome.odata_version);
+    println!("  SHA-256：       {}", outcome.sha256);
+    println!("  大小：          {} 字节", outcome.size_bytes);
     if outcome.created_new_offline_profile {
-        println!("  (created new offline profile bucket)");
+        println!("  （已创建新的离线配置桶）");
     }
 }
 
@@ -2830,7 +2813,7 @@ fn cmd_offline_import(
     note: Option<String>,
     json: bool,
 ) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("loading config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
     let opts = ImportOptions {
         file_path: file,
         target_offline_profile,
@@ -2839,7 +2822,7 @@ fn cmd_offline_import(
         now_iso: current_iso8601(),
     };
     let outcome =
-        offline::import_edmx_file(&mut cfg, &config_dir.path, opts).context("import_edmx_file")?;
+        offline::import_edmx_file(&mut cfg, &config_dir.path, opts).context("导入 EDMX 文件失败")?;
     if json {
         let s = serde_json::to_string_pretty(&outcome)?;
         println!("{s}");
@@ -2852,7 +2835,7 @@ fn cmd_offline_import(
 /// List offline profiles (when `profile` is None) or services within
 /// an offline profile. Reads only the local TOML index — no network.
 fn cmd_offline_list(profile: Option<String>, json: bool) -> Result<()> {
-    let (cfg, _) = config::load_config().context("loading config")?;
+    let (cfg, _) = config::load_config().context("加载配置文件失败")?;
     match profile {
         None => render_offline_profiles(&cfg, json),
         Some(name) => render_offline_services(&cfg, &name, json),
@@ -2882,14 +2865,14 @@ fn render_offline_profiles(cfg: &config::ConfigFile, json: bool) -> Result<()> {
     }
     if cfg.offline_profiles.is_empty() {
         println!(
-            "No offline profiles. Use `sap-odata offline save` (from a connected profile) or `sap-odata offline import <file>` to create one."
+            "尚无离线配置。可使用 `sap-odata offline save`（需连接配置）或 `sap-odata offline import <file>` 创建。"
         );
         return Ok(());
     }
     let mut table = Table::new();
     table
         .load_style(UTF8_FULL)
-        .set_header(vec!["Profile", "Source", "Services", "Created"]);
+        .set_header(vec!["配置", "来源", "服务数", "创建时间"]);
     for (name, p) in &cfg.offline_profiles {
         let count = cfg
             .offline_services
@@ -2920,16 +2903,16 @@ fn render_offline_profiles(cfg: &config::ConfigFile, json: bool) -> Result<()> {
 fn offline_bucket_not_found(cfg: &config::ConfigFile, name: &str) -> anyhow::Error {
     let buckets: Vec<&str> = cfg.offline_profiles.keys().map(String::as_str).collect();
     let available = if buckets.is_empty() {
-        "none yet".to_string()
+        "暂无".to_string()
     } else {
         buckets.join(", ")
     };
     if cfg.connections.contains_key(name) {
         anyhow::anyhow!(
-            "'{name}' is a connected profile, not an offline bucket. The offline commands take the bucket name from --profile, and a global -p fills the same value — omit -p (or pass the bucket name). Offline buckets: {available}"
+            "'{name}' 是连接配置，不是离线配置桶。离线命令通过 --profile 指定配置桶，而全局 -p 也会填入同一个参数——请省略 -p 或传入配置桶名称。可用离线配置桶：{available}"
         )
     } else {
-        anyhow::anyhow!("Offline profile '{name}' not found. Offline buckets: {available}")
+        anyhow::anyhow!("找不到离线配置 '{name}'。可用离线配置桶：{available}")
     }
 }
 
@@ -2947,16 +2930,16 @@ fn render_offline_services(cfg: &config::ConfigFile, profile: &str, json: bool) 
         return Ok(());
     }
     if services.is_empty() {
-        println!("Offline profile '{profile}' has no services yet.");
+        println!("离线配置 '{profile}' 中尚无服务。");
         return Ok(());
     }
     let mut table = Table::new();
     table.load_style(UTF8_FULL).set_header(vec![
-        "Service ID",
-        "Label",
-        "Version",
-        "Size",
-        "Source",
+        "服务 ID",
+        "标签",
+        "版本",
+        "大小",
+        "来源",
     ]);
     for s in services {
         let source = s
@@ -2968,7 +2951,7 @@ fn render_offline_services(cfg: &config::ConfigFile, profile: &str, json: bool) 
             Cell::new(&s.id),
             Cell::new(&s.label),
             Cell::new(&s.odata_version),
-            Cell::new(format!("{} B", s.size_bytes)),
+            Cell::new(format!("{} 字节", s.size_bytes)),
             Cell::new(truncate_for_table(&source, 60)),
         ]);
     }
@@ -2988,7 +2971,7 @@ fn cmd_offline_delete(
     yes: bool,
     json: bool,
 ) -> Result<()> {
-    let (mut cfg, config_dir) = config::load_config().context("loading config")?;
+    let (mut cfg, config_dir) = config::load_config().context("加载配置文件失败")?;
 
     // Pre-flight existence check so the confirmation prompt only
     // appears when there's actually something to delete. Without
@@ -3004,7 +2987,7 @@ fn cmd_offline_delete(
             .any(|s| s.profile == profile && &s.id == id);
         if !exists {
             anyhow::bail!(
-                "Offline service '{id}' not found in profile '{profile}'. Run `sap-odata offline list --profile {profile}` to see available service ids."
+                "离线配置 '{profile}' 中找不到服务 '{id}'。运行 `sap-odata offline list --profile {profile}` 查看可用服务 ID。"
             );
         }
     }
@@ -3012,7 +2995,7 @@ fn cmd_offline_delete(
     if !yes {
         let prompt = match &service_id {
             Some(id) => format!(
-                "Delete offline service '{id}' from '{profile}'? The cached EDMX file will be removed. (y/N)"
+                "确定从 '{profile}' 中删除离线服务 '{id}' 吗？缓存的 EDMX 文件也会被删除。（y/N）"
             ),
             None => {
                 let count = cfg
@@ -3021,7 +3004,7 @@ fn cmd_offline_delete(
                     .filter(|s| s.profile == profile)
                     .count();
                 format!(
-                    "Delete offline profile '{profile}' (containing {count} service(s))? Every cached EDMX file in this bucket will be removed. (y/N)"
+                    "确定删除离线配置 '{profile}'（包含 {count} 个服务）吗？此配置桶中的所有 EDMX 缓存文件都会被删除。（y/N）"
                 )
             }
         };
@@ -3031,7 +3014,7 @@ fn cmd_offline_delete(
             .default(false)
             .interact()?;
         if !confirmed {
-            anyhow::bail!("Aborted.");
+            anyhow::bail!("已取消操作。");
         }
     }
 
@@ -3039,7 +3022,7 @@ fn cmd_offline_delete(
         Some(id) => {
             let outcome =
                 offline::delete_offline_service(&mut cfg, &config_dir.path, &profile, &id)
-                    .context("delete_offline_service")?;
+                    .context("删除离线服务失败")?;
             if json {
                 let payload = serde_json::json!({
                     "profile": outcome.profile,
@@ -3049,20 +3032,20 @@ fn cmd_offline_delete(
                 println!("{}", serde_json::to_string_pretty(&payload)?);
             } else {
                 println!(
-                    "Offline service '{}' removed from profile '{}' (file {})",
-                    outcome.service_id,
+                    "已从离线配置 '{}' 中删除服务 '{}'（文件状态：{}）",
                     outcome.profile,
+                    outcome.service_id,
                     if outcome.file_removed {
-                        "removed"
+                        "已删除"
                     } else {
-                        "already gone"
+                        "原已不存在"
                     }
                 );
             }
         }
         None => {
             let outcome = offline::delete_offline_profile(&mut cfg, &config_dir.path, &profile)
-                .context("delete_offline_profile")?;
+                .context("删除离线配置失败")?;
             if json {
                 let payload = serde_json::json!({
                     "profile": outcome.profile,
@@ -3073,12 +3056,12 @@ fn cmd_offline_delete(
                 println!("{}", serde_json::to_string_pretty(&payload)?);
             } else {
                 println!(
-                    "Offline profile '{}' removed ({} service(s), {} file(s){})",
+                    "已删除离线配置 '{}'（{} 个服务、{} 个文件{}）",
                     outcome.profile,
                     outcome.services_removed,
                     outcome.files_removed,
                     if outcome.directory_removed {
-                        ", bucket dir removed"
+                        "，配置桶目录已删除"
                     } else {
                         ""
                     }
@@ -3178,5 +3161,5 @@ fn print_results_table(rows: &[serde_json::Value]) {
     }
 
     println!("{table}");
-    println!("\n  {} row(s) returned\n", rows.len());
+    println!("\n  返回 {} 行\n", rows.len());
 }

@@ -95,64 +95,64 @@ pub struct ValidatedEdmx {
 /// text without having to interpret the variant itself.
 #[derive(Debug, Clone, Error, PartialEq, Eq)]
 pub enum ImportError {
-    #[error("file is empty — nothing to import")]
+    #[error("文件为空，无法导入")]
     Empty,
 
     #[error(
-        "file is too large ({size} bytes); imports are capped at {limit} bytes. Real $metadata is rarely above 2 MB — this is probably the wrong file."
+        "文件过大（{size} 字节）；导入上限为 {limit} 字节。实际的 $metadata 通常不超过 2 MB，请确认选择了正确的文件。"
     )]
     TooLarge { size: u64, limit: u64 },
 
     #[error(
-        "file is gzipped. Decompress it first (e.g. `gunzip file.xml.gz`), then import the resulting `.xml`."
+        "文件经过 gzip 压缩。请先解压（例如运行 `gunzip file.xml.gz`），然后导入解压得到的 `.xml` 文件。"
     )]
     Gzipped,
 
     #[error(
-        "file starts with an HTTP status/headers prefix. Strip everything above the `<?xml` declaration and try again."
+        "文件以 HTTP 状态行或响应头开头。请删除 `<?xml` 声明之前的所有内容后重试。"
     )]
     HttpHeadersPrefix,
 
     #[error(
-        "file is not valid UTF-8. Re-save with UTF-8 encoding (no UTF-16, no ISO-8859-x) and try again."
+        "文件不是有效的 UTF-8 编码。请使用 UTF-8（而非 UTF-16 或 ISO-8859-x）重新保存后重试。"
     )]
     NotUtf8,
 
     #[error(
-        "file contains DOCTYPE or ENTITY declarations, which are not allowed in OData metadata. Re-export from the source and try again."
+        "文件包含 OData 元数据不允许的 DOCTYPE 或 ENTITY 声明。请从源系统重新导出后重试。"
     )]
     DoctypeForbidden,
 
-    #[error("XML parse failed: {0}")]
+    #[error("XML 解析失败：{0}")]
     XmlParse(String),
 
     #[error(
-        "this is an HTML page, not metadata. The SAP system likely returned a login redirect — you may need to authenticate first and re-fetch."
+        "这是 HTML 页面而非元数据。SAP 系统可能返回了登录跳转；请先完成身份验证，再重新获取元数据。"
     )]
     LooksLikeHtmlPage,
 
     #[error(
-        "this looks like an Atom service document. You want the `$metadata` URL: `<base>/<service>/$metadata`, not the service root."
+        "这看起来是 Atom 服务文档。请使用 `$metadata` 地址 `<base>/<service>/$metadata`，而不是服务根地址。"
     )]
     LooksLikeServiceDocument,
 
     #[error(
-        "this is an OData error response, not metadata. Check the service URL and authentication, then re-fetch."
+        "这是 OData 错误响应而非元数据。请检查服务 URL 和身份验证后重新获取。"
     )]
     LooksLikeODataError,
 
     #[error(
-        "document root is `<{root_name}>`, expected `<edmx:Edmx>` in a known EDMX namespace. Make sure you're importing a `$metadata` response."
+        "文档根元素为 `<{root_name}>`，预期应为已知 EDMX 命名空间中的 `<edmx:Edmx>`。请确认导入的是 `$metadata` 响应。"
     )]
     NotEdmxRoot { root_name: String },
 
     #[error(
-        "the selected path is not a regular file (directories, symlinks-to-directories, and other special files cannot be imported as EDMX)."
+        "所选路径不是普通文件（目录、指向目录的符号链接及其他特殊文件不能作为 EDMX 导入）。"
     )]
     NotARegularFile,
 
     #[error(
-        "EDMX wrapper found but no Schema element with a non-empty Namespace — this metadata is empty or truncated."
+        "已找到 EDMX 外层元素，但其中没有 Namespace 非空的 Schema 元素；元数据可能为空或已被截断。"
     )]
     NoSchema,
 }

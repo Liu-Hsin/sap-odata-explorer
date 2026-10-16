@@ -28,6 +28,8 @@ Full command reference for `sap-odata`. For a quick start, see the [main README]
 
 All examples use fictional hostnames like `sap-dev.example.com` paired with real SAP standard service paths (`API_BUSINESS_PARTNER`, `API_SALES_ORDER_SRV`, etc.) so you can translate them directly to your system.
 
+Help text, interactive prompts, tables, and human-readable CLI diagnostics are displayed in Simplified Chinese. `--json` keeps its existing field names and machine-readable enum values for script compatibility; raw SAP metadata and response data are not translated.
+
 ## Global flags
 
 `--profile`/`-p`, `--json` and `--verbose`/`-v` work in any position. The
@@ -590,12 +592,12 @@ The CLI surfaces SAP-specific hints alongside raw HTTP status codes. These are t
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `service not found: /sap/opu/odata/... — Hint: The OData service path may be wrong, inactive, or not registered in /IWFND/MAINT_SERVICE.` | Service exists in the backend but isn't activated in Gateway | Add it via `/IWFND/MAINT_SERVICE` (transaction) |
-| `server returned 403 Forbidden — Hint: Access to the SAP Gateway catalog was denied.` | User lacks catalog read authorisation | Check roles for `/IWFND/CATALOGSERVICE`; users often need `SAP_GATEWAY_ADMIN` or equivalent |
-| `browser sign-in incomplete; SAP or the IdP returned HTML instead of OData` | Browser SSO session expired / cookies stale | Run `sap-odata signout <profile>` then sign in again from the desktop app |
-| `server returned 500 ... — Hint: SAP returned a server-side error. Check /IWFND/ERROR_LOG, ST22, and backend application logs.` | Dump or application error in the backend | Use transaction `/IWFND/ERROR_LOG` for the gateway error, `ST22` for ABAP short dumps |
-| `Authentication was accepted by the HTTP stack but SAP rejected the request.` | SSO transport worked, but the resolved user lacks service authorisation | Check SU53 on the backend for missing authorisation objects |
-| `could not fetch the service catalog: V2 catalog: ...; V4 catalog: ...` | Every catalog request failed (auth, expired session, network, SICF node inactive) | The per-catalog reasons follow the colon; rerun with `--verbose` for the full HTTP trace |
-| `No services found.` | The catalog answered but nothing matched | Loosen `-f`; try without `--v4`/`--v2` |
+| `未找到服务：/sap/opu/odata/... — 提示：OData 服务路径可能不正确、未激活，或未在 /IWFND/MAINT_SERVICE 中注册。` | 服务存在于后端，但尚未在 Gateway 中激活 | 通过事务 `/IWFND/MAINT_SERVICE` 添加服务 |
+| `服务器返回 HTTP 403 Forbidden — 提示：访问 SAP Gateway 服务目录遭拒。` | 用户缺少服务目录读取授权 | 检查 `/IWFND/CATALOGSERVICE` 的角色授权；通常需要 `SAP_GATEWAY_ADMIN` 或等效权限 |
+| `浏览器登录尚未完成；SAP 或身份提供方返回了 HTML 页面，而不是 OData。` | Browser SSO 会话过期或 Cookie 失效 | 运行 `sap-odata signout <profile>`，然后从桌面应用重新登录 |
+| `服务器返回 HTTP 500 ... — 提示：SAP 返回了服务器端错误。请检查 /IWFND/ERROR_LOG、ST22 以及后端应用日志。` | 后端发生转储或应用错误 | 使用事务 `/IWFND/ERROR_LOG` 查看 Gateway 错误，使用 `ST22` 查看 ABAP 短转储 |
+| `HTTP 层已接受 Basic 认证，但 SAP 拒绝了请求。` | SSO 传输成功，但当前用户缺少服务授权 | 在后端运行 SU53 检查缺失的授权对象 |
+| `无法获取服务目录：V2 服务目录：...；V4 服务目录：...` | 所有服务目录请求均失败（认证、会话过期、网络或 SICF 节点未激活） | 查看各目录错误详情；使用 `--verbose` 查看完整 HTTP 跟踪 |
+| `没有找到服务。` | 服务目录请求成功，但没有匹配项 | 放宽 `-f` 条件，或尝试移除 `--v4` / `--v2` |
 
 For anything else, `--verbose` and reading the HTTP trace is almost always enough to spot the cause — it includes the redirect chain, server-reported SAP error messages, and the first ~4KB of any response body.

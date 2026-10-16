@@ -188,7 +188,7 @@ impl SapClient {
             }
             Ok(None) => Ok(false),
             Err(e) => Err(ODataError::AuthFailed(format!(
-                "failed to load persisted session: {e}"
+                "读取已保存的会话失败：{e}"
             ))),
         }
     }
@@ -249,7 +249,7 @@ impl SapClient {
             let is_idp_redirect = crate::session::is_idp_redirect_location(location);
             if is_idp_redirect {
                 return Err(ODataError::AuthFailed(
-                    "browser sign-in required or session expired — run `signout <profile>` and re-sign-in from the desktop app".to_string(),
+                    "需要浏览器登录或会话已过期——运行 `signout <profile>`，然后从桌面应用重新登录。".to_string(),
                 ));
             }
             // Otherwise it might be a normal SAP redirect — follow it
@@ -304,9 +304,9 @@ impl SapClient {
                 // so there's nothing useful to interpolate into the error here.
                 let _ = self.read_response_text(trace_id, resp).await;
                 return Err(ODataError::AuthFailed(
-                    "browser sign-in incomplete; SAP or the IdP returned HTML instead of OData. \
-                     The session likely expired — run `signout <profile>` and re-sign-in from the desktop app, \
-                     then inspect the HTTP trace for redirects."
+                    "浏览器登录尚未完成；SAP 或身份提供方返回了 HTML 页面，而不是 OData。\
+                     会话可能已过期——运行 `signout <profile>`，然后从桌面应用重新登录，\
+                     并检查 HTTP 跟踪中的重定向信息。"
                         .to_string(),
                 ));
             }
@@ -358,7 +358,7 @@ impl SapClient {
         let (resp, trace_id) = self.send_with_sso_redirects(req).await?;
         let text = self.read_text_response(resp, trace_id).await?;
         serde_json::from_str(&text)
-            .map_err(|e| ODataError::ResponseParse(format!("invalid JSON response: {e}")))
+            .map_err(|e| ODataError::ResponseParse(format!("JSON 响应无效：{e}")))
     }
 
     /// Get a raw URL and return the response body as text.
@@ -564,10 +564,10 @@ fn response_error(
         if status == StatusCode::FORBIDDEN
             && let Some(msg) = extract_sap_error(body)
         {
-            detail.push_str(&format!("\n  SAP error: {msg}"));
+            detail.push_str(&format!("\n  SAP 错误：{msg}"));
         }
         if let Some(hint) = response_hint(status, url, content_type, body, auth) {
-            detail.push_str(&format!("\n  Hint: {hint}"));
+            detail.push_str(&format!("\n  提示：{hint}"));
         }
         return ODataError::ServiceNotFound(detail);
     }
@@ -576,12 +576,12 @@ fn response_error(
         return ODataError::AuthFailed(auth_error_detail(status, url, content_type, body, auth));
     }
 
-    let mut detail = format!("server returned {status}");
+    let mut detail = format!("服务器返回 HTTP {status}");
     if let Some(msg) = extract_sap_error(body) {
-        detail.push_str(&format!("\n  SAP error: {msg}"));
+        detail.push_str(&format!("\n  SAP 错误：{msg}"));
     }
     if let Some(hint) = response_hint(status, url, content_type, body, auth) {
-        detail.push_str(&format!("\n  Hint: {hint}"));
+        detail.push_str(&format!("\n  提示：{hint}"));
     }
     ODataError::ResponseParse(detail)
 }
@@ -593,12 +593,12 @@ fn auth_error_detail(
     body: &str,
     auth: &AuthConfig,
 ) -> String {
-    let mut detail = format!("server returned {status}");
+    let mut detail = format!("服务器返回 HTTP {status}");
     if let Some(msg) = extract_sap_error(body) {
-        detail.push_str(&format!("\n  SAP error: {msg}"));
+        detail.push_str(&format!("\n  SAP 错误：{msg}"));
     }
     if let Some(hint) = response_hint(status, url, content_type, body, auth) {
-        detail.push_str(&format!("\n  Hint: {hint}"));
+        detail.push_str(&format!("\n  提示：{hint}"));
     }
     detail
 }
@@ -630,19 +630,19 @@ pub fn response_hint(
     if status == StatusCode::NOT_FOUND {
         if path.contains("/iwfnd/catalogservice") {
             return Some(
-                "SAP Gateway catalog service was not found. Check SICF activation for /IWFND/CATALOGSERVICE and that the base URL points at the right system."
+                    "未找到 SAP Gateway 服务目录。请检查 SICF 中的 /IWFND/CATALOGSERVICE 是否已激活，并确认基础 URL 指向正确的系统。"
                     .to_string(),
             );
         }
         if path.contains("/sap/opu/odata4") {
             return Some(
-                "V4 OData lookup failed. The service path may be wrong, the entity set may not exist on this service (`entities -s <svc>` lists valid sets), or the V4 catalog SICF node may be unpublished on this system — try pasting the full /sap/opu/odata4/<vendor>/<svc>/<version>/ path instead of the short name. Use `services` to list what's exposed."
+                "V4 OData 服务查询失败。服务路径可能不正确，或该服务中不存在此实体集（运行 `entities -s <svc>` 查看有效实体集）；也可能是系统未发布 V4 目录 SICF 节点。请尝试粘贴完整的 /sap/opu/odata4/<厂商>/<服务>/<版本>/ 路径，而不要使用短名称。运行 `services` 查看已发布的服务。"
                     .to_string(),
             );
         }
         if path.contains("/sap/opu/odata") || path.contains("/$metadata") {
             return Some(
-                "The OData service path may be wrong, inactive, or not registered in /IWFND/MAINT_SERVICE. If the service exists, the entity set name may not — use `entities -s <svc>` to list valid sets."
+                "OData 服务路径可能不正确、未激活，或未在 /IWFND/MAINT_SERVICE 中注册。如果服务存在，也可能是实体集名称不正确——运行 `entities -s <svc>` 查看有效实体集。"
                     .to_string(),
             );
         }
@@ -650,7 +650,7 @@ pub fn response_hint(
 
     if is_unknown_service_403(status, body) {
         return Some(
-            "SAP Gateway has no service registered under this path. Check the path and its version (`services` lists registered service URLs) and that the service is activated — /IWFND/MAINT_SERVICE for V2, /IWFND/V4_ADMIN for V4. This 403 is not an authorization problem."
+            "SAP Gateway 未在此路径下注册服务。请检查路径和版本（`services` 会列出已注册的服务 URL），并确认服务已激活：V2 使用 /IWFND/MAINT_SERVICE，V4 使用 /IWFND/V4_ADMIN。此 403 并非授权问题。"
                 .to_string(),
         );
     }
@@ -658,30 +658,30 @@ pub fn response_hint(
     if status == StatusCode::UNAUTHORIZED || status == StatusCode::FORBIDDEN {
         if matches!(auth, AuthConfig::Browser) && content_type.starts_with("text/html") {
             return Some(
-                "Browser SSO usually returned a login page instead of an OData response. Run `signout <profile>` and re-sign-in from the desktop app, then inspect the request log for redirects."
+                "Browser SSO 返回了登录页面，而不是 OData 响应。运行 `signout <profile>`，然后从桌面应用重新登录，并检查请求日志中的重定向信息。"
                     .to_string(),
             );
         }
         if matches!(auth, AuthConfig::Browser) {
             return Some(
-                "Browser SSO session likely expired. Run `signout <profile>` and re-sign-in from the desktop app."
+                "Browser SSO 会话可能已过期。运行 `signout <profile>`，然后从桌面应用重新登录。"
                     .to_string(),
             );
         }
         if path.contains("/iwfnd/catalogservice") {
             return Some(
-                "Access to the SAP Gateway catalog was denied. Check SAP authorizations for catalog discovery and that the user can reach /IWFND/CATALOGSERVICE."
+                "访问 SAP Gateway 服务目录遭拒。请检查用户是否具有目录发现所需的 SAP 授权，以及是否能访问 /IWFND/CATALOGSERVICE。"
                     .to_string(),
             );
         }
         if matches!(auth, AuthConfig::Basic { .. }) {
             return Some(
-                "Basic authentication was accepted by the HTTP stack but SAP rejected the request. Check the profile's user, password, and service authorization. SU53 on the backend reveals missing authorisation objects."
+                "HTTP 层已接受 Basic 认证，但 SAP 拒绝了请求。请检查配置中的用户名、密码和服务授权；在后端运行 SU53 可查看缺失的授权对象。"
                     .to_string(),
             );
         }
         return Some(
-            "Authentication succeeded at the transport layer but SAP denied access. Check the active session, assigned roles, and any front-door SSO policy."
+            "传输层认证成功，但 SAP 拒绝了访问。请检查当前会话、分配的角色以及入口处的 SSO 策略。"
                 .to_string(),
         );
     }
@@ -695,20 +695,20 @@ pub fn response_hint(
         && let Some(code) = extract_sap_error_code(body)
     {
         return Some(format!(
-            "SAP error code {code}. Look the message up in SE91 (or your IDE's SAP message viewer) for the full text and where-used."
+            "SAP 错误代码 {code}。请在 SE91（或 IDE 中的 SAP 消息查看器）查询完整文本及使用位置。"
         ));
     }
 
     if status.is_server_error() {
         if path.contains("/sap/opu/odata") {
             return Some(
-                "SAP returned a server-side error. Check /IWFND/ERROR_LOG, ST22, and backend application logs for the failing service."
+                "SAP 返回了服务器端错误。请检查 /IWFND/ERROR_LOG、ST22 以及后端应用日志，查找该服务的错误信息。"
                     .to_string(),
             );
         }
         if !body.is_empty() && content_type.starts_with("text/html") {
             return Some(
-                "An HTML error page was returned instead of OData. This often means a reverse proxy, SSO gateway, or SAP ICF error page intercepted the request."
+                "服务器返回了 HTML 错误页面，而不是 OData 响应。这通常表示请求被反向代理、SSO 网关或 SAP ICF 错误页面拦截。"
                     .to_string(),
             );
         }
@@ -869,7 +869,7 @@ mod tests {
             &basic_auth(),
         )
         .expect("expected a hint");
-        assert!(h.contains("SU53") || h.contains("authorization") || h.contains("authorisation"));
+        assert!(h.contains("SU53") || h.contains("授权"));
     }
 
     #[test]

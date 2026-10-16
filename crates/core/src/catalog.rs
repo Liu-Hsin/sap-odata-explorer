@@ -93,7 +93,7 @@ async fn fetch_v2_catalog(client: &SapClient) -> Result<Vec<CatalogEntry>, OData
         prefix_chars(&json_text, 500)
     );
     let data: serde_json::Value = serde_json::from_str(&json_text)
-        .map_err(|e| ODataError::MetadataParse(format!("V2 catalog parse error: {e}")))?;
+        .map_err(|e| ODataError::MetadataParse(format!("V2 服务目录解析失败：{e}")))?;
 
     debug!("V2 catalog response received");
 
@@ -129,7 +129,7 @@ async fn fetch_v4_catalog(client: &SapClient) -> Result<Vec<CatalogEntry>, OData
     );
     let json_text = client.get_raw(V4_CATALOG_PATH, &url_path).await?;
     let data: serde_json::Value = serde_json::from_str(&json_text)
-        .map_err(|e| ODataError::MetadataParse(format!("V4 catalog parse error: {e}")))?;
+        .map_err(|e| ODataError::MetadataParse(format!("V4 服务目录解析失败：{e}")))?;
 
     debug!("V4 catalog response received");
 
@@ -189,7 +189,7 @@ pub async fn resolve_v4_service_url(
     );
     let json_text = client.get_raw(V4_CATALOG_PATH, &url_path).await?;
     let data: serde_json::Value = serde_json::from_str(&json_text)
-        .map_err(|e| ODataError::MetadataParse(format!("V4 service resolve error: {e}")))?;
+        .map_err(|e| ODataError::MetadataParse(format!("V4 服务解析失败：{e}")))?;
 
     debug!("V4 service resolution for '{group_id}' received");
 
@@ -205,7 +205,7 @@ pub async fn resolve_v4_service_url(
     }
 
     Err(ODataError::ServiceNotFound(format!(
-        "no service URL found for V4 group '{group_id}'"
+        "V4 服务组 '{group_id}' 中没有找到服务 URL"
     )))
 }
 
@@ -230,7 +230,7 @@ pub async fn resolve_service_by_name(client: &SapClient, name: &str) -> Result<S
         }
         Err(e) => {
             debug!("V2 catalog fetch failed during resolve: {e}");
-            errors.push(format!("V2: {e}"));
+            errors.push(format!("V2 错误：{e}"));
         }
     }
 
@@ -253,7 +253,7 @@ pub async fn resolve_service_by_name(client: &SapClient, name: &str) -> Result<S
                         }
                         Err(e) => {
                             debug!("V4 URL resolution failed for '{name}': {e}");
-                            errors.push(format!("V4 group '{}': {e}", entry.technical_name));
+                            errors.push(format!("V4 组 '{}'：{e}", entry.technical_name));
                         }
                     }
                 }
@@ -261,14 +261,14 @@ pub async fn resolve_service_by_name(client: &SapClient, name: &str) -> Result<S
         }
         Err(e) => {
             debug!("V4 catalog fetch failed during resolve: {e}");
-            errors.push(format!("V4: {e}"));
+            errors.push(format!("V4 错误：{e}"));
         }
     }
 
     let detail = if errors.is_empty() {
         String::new()
     } else {
-        format!(" (catalog errors: {})", errors.join("; "))
+        format!("（服务目录错误：{}）", errors.join("；"))
     };
     Err(ODataError::ServiceNotFound(format!(
         "service '{name}' not found in V2 or V4 catalogs{detail}"

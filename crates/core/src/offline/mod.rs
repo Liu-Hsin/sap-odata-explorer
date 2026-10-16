@@ -179,7 +179,7 @@ pub enum MetadataSource {
 #[derive(Debug, Error)]
 pub enum NetworkNotAllowed {
     #[error(
-        "operation requires network access, but the active profile '{profile}' is an offline cache"
+        "此操作需要网络访问，但当前配置 '{profile}' 是离线缓存"
     )]
     OfflineSource { profile: String },
 }
@@ -189,10 +189,10 @@ pub enum NetworkNotAllowed {
 /// resolution failures happen *before* any network-allowed assertion.
 #[derive(Debug, Error)]
 pub enum MetadataSourceError {
-    #[error("profile '{0}' not found in either connections or offline_profiles")]
+    #[error("在 connections 和 offline_profiles 中均找不到配置 '{0}'")]
     ProfileNotFound(String),
     #[error(
-        "offline profile '{profile}' has no service matching '{identifier}' (tried `id` and `source_service_path`)"
+        "离线配置 '{profile}' 中没有与 '{identifier}' 匹配的服务（已按 `id` 和 `source_service_path` 查找）"
     )]
     OfflineServiceNotFound { profile: String, identifier: String },
     /// Corrupt state: a profile name exists in *both* `connections` and
@@ -204,7 +204,7 @@ pub enum MetadataSourceError {
     /// (step 7) prevents new collisions; this variant exists for
     /// configs that pre-date that check or were edited by hand.
     #[error(
-        "profile name '{0}' is present in BOTH connections and offline_profiles — dispatch is ambiguous. Rename or remove one of them in connections.toml."
+        "配置名称 '{0}' 同时存在于 connections 和 offline_profiles 中，无法确定应使用哪一项。请在 connections.toml 中重命名或删除其中一项。"
     )]
     NameCollision(String),
 }
@@ -320,7 +320,7 @@ pub fn check_connected_profile_name_available(
     }
     if config.offline_profiles.contains_key(name) {
         return Err(format!(
-            "Cannot add connected profile '{name}' — an offline profile with the same name already exists. Pick a different name, or remove the offline profile first."
+            "无法添加连接配置 '{name}'：同名离线配置已存在。请使用其他名称，或先删除该离线配置。"
         ));
     }
     Ok(())
@@ -598,7 +598,7 @@ mod tests {
         let cfg = build_test_config();
         let err = check_connected_profile_name_available("DEV (offline)", &cfg).unwrap_err();
         assert!(err.contains("DEV (offline)"));
-        assert!(err.contains("offline profile"));
+        assert!(err.contains("离线配置"));
     }
 
     #[test]

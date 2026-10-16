@@ -52,7 +52,7 @@ mod imp {
 
         if let Err(e) = result {
             return Err(format!(
-                "AcquireCredentialsHandle failed: {}. Is this machine domain-joined?",
+                "AcquireCredentialsHandle 调用失败：{}。此计算机是否已加入域？",
                 e
             ));
         }
@@ -103,14 +103,14 @@ mod imp {
         // Check result: SEC_E_OK (0) or SEC_I_CONTINUE_NEEDED (0x00090312)
         if hresult.is_err() {
             return Err(format!(
-                "InitializeSecurityContext failed: 0x{:08x}. \
-                 SPN '{}' may not be registered, or domain trust not set up.",
+                "InitializeSecurityContext 调用失败：0x{:08x}。\
+                 SPN '{}' 可能尚未注册，或域信任关系未配置。",
                 hresult.0 as u32, spn
             ));
         }
 
         if out_buffer.pvBuffer.is_null() || out_buffer.cbBuffer == 0 {
-            return Err("SSPI returned empty token".to_string());
+            return Err("SSPI 返回了空令牌".to_string());
         }
 
         let token_bytes = unsafe {

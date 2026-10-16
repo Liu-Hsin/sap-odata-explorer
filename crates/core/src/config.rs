@@ -22,16 +22,16 @@ pub enum KeyringReadError {
     /// a locked Windows Credential Manager / macOS Keychain, or a Linux
     /// session without a running secret service. User-actionable: unlock
     /// or sign in to the credential store.
-    #[error("keyring is locked or access was denied: {0}")]
+    #[error("凭据库已锁定或访问被拒绝：{0}")]
     Locked(String),
     /// The stored credential blob exists but is corrupt (not valid UTF-8).
     /// Re-saving the password will overwrite it.
-    #[error("stored credential is corrupt: {0}")]
+    #[error("已保存的凭据已损坏：{0}")]
     Corrupt(String),
     /// Catch-all for platform-runtime errors and credential-attribute
     /// validation failures (TooLong / Invalid / Ambiguous). The underlying
     /// message is preserved for diagnostics.
-    #[error("keyring backend failure: {0}")]
+    #[error("凭据库后端错误：{0}")]
     Backend(String),
 }
 
@@ -39,7 +39,7 @@ fn classify_keyring_error(err: keyring::Error) -> KeyringReadError {
     match err {
         keyring::Error::NoStorageAccess(inner) => KeyringReadError::Locked(inner.to_string()),
         keyring::Error::BadEncoding(_) => {
-            KeyringReadError::Corrupt("stored bytes are not valid UTF-8".to_string())
+            KeyringReadError::Corrupt("已保存的数据不是有效的 UTF-8".to_string())
         }
         // PlatformFailure, TooLong, Invalid, Ambiguous, and any future
         // variants fold into Backend with the crate's own Display string
@@ -104,7 +104,7 @@ pub fn normalize_environment(value: &str) -> Result<Option<String>, String> {
         "PRD" | "PROD" | "PRODUCTION" => "PRD",
         _ => {
             return Err(format!(
-                "unknown environment '{value}' — use one of {}",
+                "未知环境 '{value}'——请使用以下值之一：{}",
                 ENVIRONMENTS.join(", ")
             ));
         }
@@ -225,7 +225,7 @@ pub fn get_or_create_config_dir() -> anyhow::Result<ConfigDir> {
 
     // Use OS config dir
     let proj_dirs = directories::ProjectDirs::from("", "", "sap-odata-explorer")
-        .ok_or_else(|| anyhow::anyhow!("could not determine config directory"))?;
+        .ok_or_else(|| anyhow::anyhow!("无法确定配置目录"))?;
 
     let config_dir = proj_dirs.config_dir();
     std::fs::create_dir_all(config_dir)?;
@@ -307,7 +307,7 @@ pub fn save_connections(config: &ConfigFile, config_dir: &Path) -> anyhow::Resul
         .find(|name| on_disk.offline_profiles.contains_key(*name))
     {
         anyhow::bail!(
-            "profile name '{name}' is now used by an offline bucket — choose another name"
+            "配置名称 '{name}' 已被离线配置桶使用，请选择其他名称"
         );
     }
     on_disk.connections = config.connections.clone();
@@ -446,10 +446,10 @@ pub fn set_password_in_keyring(
 ) -> anyhow::Result<()> {
     let target = format!("{KEYRING_SERVICE}:{profile_name}:{username}");
     let entry = keyring::Entry::new(&target, username)
-        .map_err(|e| anyhow::anyhow!("keyring error: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     entry
         .set_password(password)
-        .map_err(|e| anyhow::anyhow!("failed to store password in keyring: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("将密码保存到凭据库失败：{e}"))?;
     Ok(())
 }
 
@@ -459,11 +459,11 @@ pub fn set_password_in_keyring(
 pub fn delete_password_from_keyring(profile_name: &str, username: &str) -> anyhow::Result<()> {
     let target = format!("{KEYRING_SERVICE}:{profile_name}:{username}");
     let entry = keyring::Entry::new(&target, username)
-        .map_err(|e| anyhow::anyhow!("keyring error: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(anyhow::anyhow!("failed to delete from keyring: {e}")),
+        Err(e) => Err(anyhow::anyhow!("从凭据库删除密码失败：{e}")),
     }
 }
 
@@ -502,28 +502,28 @@ pub fn resolve_connection(
         match try_get_password_from_keyring(profile_name, &profile.username) {
             Ok(Some(pw)) => pw,
             Ok(None) => anyhow::bail!(
-                "no password found for profile '{}' (user: {}). \
-                 Use 'sap-odata profile add' to set one, or set SAP_PASSWORD env var.",
+                "连接配置 '{}'（用户：{}）未找到密码。\
+                 请运行 'sap-odata profile add' 设置密码，或设置 SAP_PASSWORD 环境变量。",
                 profile_name,
                 profile.username
             ),
             // Distinct messaging for read failures: re-adding the profile
             // wouldn't help if the OS credential store itself is unreachable.
             Err(KeyringReadError::Locked(msg)) => anyhow::bail!(
-                "cannot read keyring for profile '{}': {}. \
-                 Unlock your OS credential store (e.g. sign in to the keychain / Credential Manager) and retry.",
+                "无法读取连接配置 '{}' 的凭据库：{}。\
+                 请解锁操作系统凭据库（例如登录 Keychain / Credential Manager）后重试。",
                 profile_name,
                 msg
             ),
             Err(KeyringReadError::Corrupt(msg)) => anyhow::bail!(
-                "stored password for profile '{}' is corrupt: {}. \
-                 Re-save the password with 'sap-odata profile add' to overwrite it.",
+                "连接配置 '{}' 中保存的密码已损坏：{}。\
+                 请运行 'sap-odata profile add' 重新保存密码并覆盖原值。",
                 profile_name,
                 msg
             ),
             Err(KeyringReadError::Backend(msg)) => anyhow::bail!(
-                "keyring backend error for profile '{}': {}. \
-                 Check the OS credential store status; this is not a missing-password issue.",
+                "连接配置 '{}' 的凭据库后端错误：{}。\
+                 请检查操作系统凭据库状态；这不是密码缺失问题。",
                 profile_name,
                 msg
             ),
@@ -548,7 +548,7 @@ pub fn init_portable_config(config: &ConfigFile) -> anyhow::Result<PathBuf> {
     let exe_path = std::env::current_exe()?;
     let exe_dir = exe_path
         .parent()
-        .ok_or_else(|| anyhow::anyhow!("cannot determine exe directory"))?;
+        .ok_or_else(|| anyhow::anyhow!("无法确定可执行文件所在目录"))?;
     save_config(config, exe_dir)
 }
 
@@ -629,7 +629,7 @@ mod tests {
         let mut snapshot = ConfigFile::default();
         snapshot.connections.insert("PRD".into(), basic("u", None));
         let err = save_connections(&snapshot, &dir).unwrap_err();
-        assert!(err.to_string().contains("offline bucket"), "{err}");
+        assert!(err.to_string().contains("离线配置桶"), "{err}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -767,13 +767,13 @@ base_url = \"https://sap.corp\"
         // so they need to point at the OS credential store rather than at
         // the profile, which is the classification's whole point.
         let locked = KeyringReadError::Locked("session timeout".to_string());
-        assert!(locked.to_string().contains("locked"));
+        assert!(locked.to_string().contains("锁定"));
 
         let corrupt = KeyringReadError::Corrupt("UTF-8 decode failed".to_string());
-        assert!(corrupt.to_string().contains("corrupt"));
+        assert!(corrupt.to_string().contains("损坏"));
 
         let backend = KeyringReadError::Backend("dbus dropped".to_string());
-        assert!(backend.to_string().contains("backend"));
+        assert!(backend.to_string().contains("后端"));
     }
 
     // ── ConfigFile round-trip with offline tables ──

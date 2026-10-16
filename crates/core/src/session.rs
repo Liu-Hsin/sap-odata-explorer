@@ -33,32 +33,32 @@ const GZIP_MAGIC: [u8; 2] = [0x1f, 0x8b];
 #[cfg(not(test))]
 fn kv_set(profile_name: &str, bytes: &[u8]) -> anyhow::Result<()> {
     let entry = keyring::Entry::new(KEYRING_SERVICE, profile_name)
-        .map_err(|e| anyhow::anyhow!("keyring error: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     entry
         .set_secret(bytes)
-        .map_err(|e| anyhow::anyhow!("failed to store session: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("保存会话失败：{e}"))?;
     Ok(())
 }
 
 #[cfg(not(test))]
 fn kv_get(profile_name: &str) -> anyhow::Result<Option<Vec<u8>>> {
     let entry = keyring::Entry::new(KEYRING_SERVICE, profile_name)
-        .map_err(|e| anyhow::anyhow!("keyring error: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     match entry.get_secret() {
         Ok(bytes) => Ok(Some(bytes)),
         Err(keyring::Error::NoEntry) => Ok(None),
-        Err(e) => Err(anyhow::anyhow!("failed to load session: {e}")),
+        Err(e) => Err(anyhow::anyhow!("读取会话失败：{e}")),
     }
 }
 
 #[cfg(not(test))]
 fn kv_del(profile_name: &str) -> anyhow::Result<()> {
     let entry = keyring::Entry::new(KEYRING_SERVICE, profile_name)
-        .map_err(|e| anyhow::anyhow!("keyring error: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(anyhow::anyhow!("failed to clear session: {e}")),
+        Err(e) => Err(anyhow::anyhow!("清除会话失败：{e}")),
     }
 }
 
@@ -125,14 +125,14 @@ fn stored_gzip_bytes(stored: &[u8]) -> anyhow::Result<Vec<u8>> {
             .iter()
             .map(|pair| u16::from_le_bytes(*pair))
             .collect();
-        String::from_utf16(&units).map_err(|e| anyhow::anyhow!("corrupt session blob: {e}"))?
+        String::from_utf16(&units).map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?
     } else {
         String::from_utf8(stored.to_vec())
-            .map_err(|e| anyhow::anyhow!("corrupt session blob: {e}"))?
+            .map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?
     };
     base64::engine::general_purpose::STANDARD
         .decode(text.trim())
-        .map_err(|e| anyhow::anyhow!("corrupt session blob: {e}"))
+        .map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))
 }
 
 /// A persisted browser SSO session.
@@ -237,8 +237,8 @@ pub fn save(
     let compressed = gzip_compress(&json)?;
     if cfg!(windows) && compressed.len() > MAX_STORED_BYTES {
         anyhow::bail!(
-            "session cookies too large for the Windows credential store \
-             ({} cookies, {} bytes compressed, limit {MAX_STORED_BYTES})",
+            "会话 Cookie 过大，无法存入 Windows 凭据库\
+             （{} 个 Cookie，压缩后 {} 字节，限制为 {MAX_STORED_BYTES} 字节）",
             cookies.len(),
             compressed.len()
         );
@@ -267,7 +267,7 @@ pub fn load(profile_name: &str) -> anyhow::Result<Option<PersistedSession>> {
     let compressed = stored_gzip_bytes(&stored)?;
     let json = gzip_decompress(&compressed)?;
     let session: PersistedSession =
-        serde_json::from_slice(&json).map_err(|e| anyhow::anyhow!("corrupt session data: {e}"))?;
+        serde_json::from_slice(&json).map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?;
 
     Ok(Some(session))
 }

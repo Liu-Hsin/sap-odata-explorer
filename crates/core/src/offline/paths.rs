@@ -22,19 +22,19 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum PathError {
-    #[error("path is empty")]
+    #[error("路径为空")]
     Empty,
-    #[error("path is absolute, expected relative: {0}")]
+    #[error("路径必须是相对路径，不能是绝对路径：{0}")]
     Absolute(String),
-    #[error("path contains parent traversal ('..'): {0}")]
+    #[error("路径包含上级目录跳转（'..'）：{0}")]
     ParentTraversal(String),
-    #[error("path component is a Windows reserved name: {0}")]
+    #[error("路径组件使用了 Windows 保留名称：{0}")]
     ReservedName(String),
-    #[error("path contains illegal characters: {0}")]
+    #[error("路径包含非法字符：{0}")]
     IllegalChars(String),
-    #[error("resolved path escapes root: {0}")]
+    #[error("解析后的路径超出根目录范围：{0}")]
     EscapesRoot(String),
-    #[error("path I/O error: {0}")]
+    #[error("路径输入/输出操作失败：{0}")]
     Io(String),
 }
 
@@ -181,7 +181,7 @@ pub fn canonicalize_under(path: &Path, root: &Path) -> Result<PathBuf, PathError
     let canonical_root = std::fs::canonicalize(root)
         .map_err(|e| PathError::Io(format!("canonicalize root {}: {e}", root.display())))?;
     let canonical_path = std::fs::canonicalize(path)
-        .map_err(|e| PathError::Io(format!("canonicalize path {}: {e}", path.display())))?;
+        .map_err(|e| PathError::Io(format!("规范化路径 {} 失败：{e}", path.display())))?;
     if canonical_path == canonical_root {
         return Err(PathError::EscapesRoot(format!(
             "{} resolves to the root itself — strict-descendancy required",

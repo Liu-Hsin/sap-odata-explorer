@@ -28,23 +28,23 @@ const _CONFIG_FILENAME_REFERENCED_FOR_DOCS: &str = CONFIG_FILENAME;
 
 #[derive(Debug, Error)]
 pub enum OfflineReadError {
-    #[error("offline profile '{0}' not found in connections.toml")]
+    #[error("在 connections.toml 中找不到离线配置 '{0}'")]
     ProfileNotFound(String),
 
-    #[error("offline service '{service_id}' not found in profile '{profile}'")]
+    #[error("离线配置 '{profile}' 中找不到服务 '{service_id}'")]
     ServiceNotFound { profile: String, service_id: String },
 
-    #[error("path safety violation reading offline EDMX: {0}")]
+    #[error("读取离线 EDMX 时路径安全检查失败：{0}")]
     Path(#[from] PathError),
 
-    #[error("I/O error reading offline EDMX at {path}: {source}")]
+    #[error("读取离线 EDMX 文件 '{path}' 失败：{source}")]
     Io {
         path: String,
         #[source]
         source: std::io::Error,
     },
 
-    #[error("offline EDMX is not valid UTF-8 (file may have been corrupted on disk)")]
+    #[error("离线 EDMX 不是有效的 UTF-8 文件（文件可能已损坏）")]
     NotUtf8,
 }
 
