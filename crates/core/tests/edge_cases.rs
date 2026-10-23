@@ -352,8 +352,8 @@ async fn hung_server_hits_the_read_timeout_with_a_clear_message() {
     );
     let msg = err.to_string();
     assert!(
-        msg.contains("no response from the server in time"),
-        "got: {msg}"
+        msg.contains("服务器未能及时响应"),
+        "timeout must say the server did not answer: {msg}"
     );
     assert!(msg.contains("SAP_ODATA_READ_TIMEOUT_SECS"), "got: {msg}");
 }
@@ -409,7 +409,7 @@ async fn gateway_403_no_service_found_is_reported_as_service_not_found() {
     assert!(matches!(err, ODataError::ServiceNotFound(_)), "got {err:?}");
     let msg = err.to_string();
     assert!(msg.contains("No service found for namespace"), "{msg}");
-    assert!(msg.contains("not an authorization problem"), "{msg}");
+    assert!(msg.contains("并非授权问题"), "{msg}");
     assert!(
         !msg.contains("SU53"),
         "must not blame authorizations: {msg}"

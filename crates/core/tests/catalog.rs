@@ -110,8 +110,10 @@ async fn failed_group_lookup_is_reported_not_swallowed() {
         .await
         .expect_err("no URL anywhere must fail");
     let msg = err.to_string();
+    // The group name must survive into the error; the surrounding wording is
+    // localized, so assert on the name rather than on an English phrase.
     assert!(
-        msg.contains("V4 group 'ZGROUP'"),
+        msg.contains("'ZGROUP'"),
         "lookup failure must be named: {msg}"
     );
 }
