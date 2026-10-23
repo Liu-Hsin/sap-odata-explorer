@@ -1,18 +1,33 @@
 name: Release to PyPI
 
-# Builds a platform wheel per target so `pip install sap-odata-explorer`
+# Builds one platform wheel per target, so `pip install sap-odata-cli`
 # resolves to a prebuilt `sap-odata` binary on each OS. No Rust toolchain
 # required on the user's machine.
 #
-# Trigger: push a version tag (e.g. `git tag v0.2.0 && git push --tags`).
+# Triggers:
+#   - push a version tag (`git tag v0.2.0 && git push --tags`) → build + publish
+#   - manual run → build only, wheels land in the run's artifacts (tick
+#     "publish" to also upload them)
+#
+# Runnable wheels are smoke-tested by installing them and executing
+# `sap-odata --version` on the runner that built them, so a broken archive
+# never reaches PyPI.
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Also publish the built wheels to PyPI (needs the pypi environment)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -24,46 +39,93 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            manylinux: ''
+            runnable: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            # `auto` picks a manylinux image for the Rust target so the wheel
+            # runs on older glibc distros. OpenSSL is linked statically (see
+            # crates/core/Cargo.toml), so the wheel has no libssl dependency.
+            manylinux: auto
+            runnable: true
           - os: macos-14
             target: aarch64-apple-darwin
-          - os: macos-13
+            manylinux: ''
+            runnable: true
+          # Intel wheel built on an arm64 runner: it cross-compiles fine, but
+          # the smoke test can't execute it here (Rosetta can't be assumed),
+          # so this one is verified by wheel-content inspection only.
+          - os: macos-14
             target: x86_64-apple-darwin
+            manylinux: ''
+            runnable: false
 
     steps:
       - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          # `auto` picks a manylinux image for the Rust target, so the
-          # resulting wheel works on older glibc distros too.
-          manylinux: auto
-          args: --release --out dist
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --locked --out dist
+
+      - name: Inspect wheel
+        shell: bash
+        run: |
+          ls -la dist/
+          python - <<'PY'
+          import glob, sys, zipfile
+
+          wheels = glob.glob("dist/*.whl")
+          if len(wheels) != 1:
+              sys.exit(f"expected exactly one wheel, got {wheels}")
+          print("wheel:", wheels[0].rsplit("/", 1)[-1])
+
+          with zipfile.ZipFile(wheels[0]) as z:
+              names = z.namelist()
+          binaries = [
+              n for n in names
+              if n.endswith(".data/scripts/sap-odata.exe") or n.endswith(".data/scripts/sap-odata")
+          ]
+          if not binaries:
+              sys.exit(f"no console script inside the wheel: {names}")
+          print("binary:", binaries[0])
+          PY
 
       - name: Smoke-test the built wheel
+        if: matrix.runnable
         shell: bash
         run: |
           python -m venv .venv-smoke
           if [ "$RUNNER_OS" = "Windows" ]; then
-            .venv-smoke/Scripts/python.exe -m pip install --quiet dist/*.whl
-            .venv-smoke/Scripts/sap-odata.exe --version
+            PY=.venv-smoke/Scripts/python.exe
+            BIN=.venv-smoke/Scripts/sap-odata.exe
           else
-            .venv-smoke/bin/python -m pip install --quiet dist/*.whl
-            .venv-smoke/bin/sap-odata --version
+            PY=.venv-smoke/bin/python
+            BIN=.venv-smoke/bin/sap-odata
           fi
+          "$PY" -m pip install --quiet --disable-pip-version-check dist/*.whl
+          "$PY" -m pip show sap-odata-cli | sed -n '1,3p'
+          "$BIN" --version
+          "$BIN" --help > /dev/null
 
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.target }}
           path: dist/*.whl
           if-no-files-found: error
+          retention-days: 14
 
   publish:
     name: Publish
     needs: build
+    # Tag pushes always publish; manual runs only when explicitly asked.
+    if: github.event_name == 'push' || inputs.publish
     runs-on: ubuntu-latest
     # Trusted Publishing: PyPI verifies the OIDC token, no API token secret
     # needed. Configure the publisher once at

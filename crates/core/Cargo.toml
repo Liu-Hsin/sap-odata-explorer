@@ -22,15 +22,42 @@ tracing.workspace = true
 url.workspace = true
 percent-encoding.workspace = true
 toml.workspace = true
-keyring.workspace = true
 directories.workspace = true
 base64.workspace = true
 flate2.workspace = true
 sha2.workspace = true
 time.workspace = true
 
-[target.'cfg(windows)'.dependencies]
+# ── OS credential store ──────────────────────────────────────────────────
+# `keyring` 3.x has no default backend feature: with none enabled it compiles
+# in `mock`, which accepts `set_password` and stores the secret *inside the
+# Entry object* — so it silently reports success and loses the password as
+# soon as the process exits. Each OS therefore needs its own explicit feature.
+#
+# Linux uses `linux-native` (kernel keyutils): no C dependency, so the
+# manylinux wheel builds without libdbus/OpenSSL headers. Credentials live
+# for the login session — `sync-secret-service` would persist them via
+# GNOME Keyring / KWallet but needs libdbus at build time.
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { workspace = true, features = ["windows-native"] }
 windows.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { workspace = true, features = ["apple-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { workspace = true, features = ["linux-native"] }
+# reqwest's default TLS stack on Linux is OpenSSL. Linking the distro's copy
+# would make the manylinux wheel require a specific `libssl.so.X` at runtime
+# (OpenSSL 3 on manylinux_2_28 → breaks on RHEL 8 / Ubuntu 20.04). Enabling
+# `vendored` builds OpenSSL statically into the binary instead, so the wheel
+# only depends on glibc. Same TLS stack, no runtime library guesswork.
+openssl = { version = "0.10", features = ["vendored"] }
+
+# Other unixes (FreeBSD, …): compile-only fallback, same mock behaviour as
+# before, but at least the crate builds and the CLI runs.
+[target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.dependencies]
+keyring = { workspace = true }
 
 [dev-dependencies]
 # In-process HTTP mock server for integration tests. Each `MockServer::start()`

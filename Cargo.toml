@@ -30,7 +30,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2"
 percent-encoding = "2"
 toml = "0.8"
-keyring = { version = "3", features = ["windows-native"] }
+# No features here on purpose: each platform picks its own keystore in
+# crates/core/Cargo.toml. Enabling only `windows-native` would silently
+# fall back to keyring's in-memory `mock` store on macOS/Linux, which
+# accepts writes but never persists them across processes.
+keyring = "3"
 directories = "6"
 base64 = "0.23"
 flate2 = "1"

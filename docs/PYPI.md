@@ -35,20 +35,34 @@ PyPI 包名是全球唯一的，注册后不能改名、不能删除（只能 ya
 ## 2. wheel 的平台矩阵
 
 `bindings = "bin"` 产生的是**平台相关** wheel（`Root-Is-Purelib: false`），
-每个 OS / 架构各需要一份：
+每个 OS / 架构各需要一份。`release-pypi.yml` 覆盖这四个目标：
 
-| 平台 | wheel 标签 |
+| 平台 | Rust target | 构建 runner | wheel 标签 |
+|---|---|---|---|
+| Windows x64 | `x86_64-pc-windows-msvc` | `windows-latest` | `py3-none-win_amd64` |
+| Linux x64 | `x86_64-unknown-linux-gnu` | `ubuntu-latest` + manylinux 容器 | `py3-none-manylinux_2_*_x86_64` |
+| macOS Apple Silicon | `aarch64-apple-darwin` | `macos-14` | `py3-none-macosx_11_0_arm64` |
+| macOS Intel | `x86_64-apple-darwin` | `macos-14`（交叉编译） | `py3-none-macosx_10_12_x86_64` |
+
+wheel 标签是 `py3-none-<platform>`——不含 Python ABI 绑定，任何 Python 3
+版本都装同一个 wheel。
+
+**这四份只能在 CI 里产出。** Windows 本机能编的只有第一份：交叉编译
+Linux 需要 Docker / WSL，macOS 需要 Apple SDK，两者在 Windows 上都不成立。
+所以本地 `build-wheel.ps1` 的价值是快速验证，不是凑齐发布物。
+
+**只发一部分会怎样**：缺哪个平台，那个平台的用户 `pip install` 就报
+`No matching distribution found`——搜得到、装不上。四个平台齐全再发，
+比发一半体验好。
+
+### 2.1 两个跨平台细节（已处理，改动时别退回去）
+
+| 点 | 处理方式 |
 |---|---|
-| Windows x64 | `py3-none-win_amd64` |
-| Linux x64 | `py3-none-manylinux_2_17_x86_64` |
-| macOS Apple Silicon | `py3-none-macosx_11_0_arm64` |
-| macOS Intel | `py3-none-macosx_10_12_x86_64` |
+| 系统钥匙串 | `keyring` 按平台分别启用 backend（详见 5.1）。漏掉会**静默丢密码**，比报错更糟 |
+| Linux 的 OpenSSL | 用 `openssl` 的 `vendored` feature 静态链接。否则 wheel 会绑定构建机上的 `libssl.so.X`，在 RHEL 8 / Ubuntu 20.04 上直接起不来 |
 
-**只发 Windows 那份的话，Linux/macOS 用户 `pip install` 会报
-"No matching distribution found"。** 所以必须走 CI 矩阵，见第 4 节。
-
-wheel 标签是 `py3-none-<platform>`——不含 Python ABI 绑定，因此任何
-Python 3 版本都能装同一个 wheel。
+Linux 包仍然依赖 glibc，具体下限看 wheel 名里的 `manylinux_*` 标签。
 
 ---
 
@@ -111,9 +125,30 @@ git push origin v0.2.0
 ```
 
 推 tag 触发 `.github/workflows/release-pypi.yml`：四个平台并行构建 →
-各自冒烟测试 `sap-odata --version` → 汇总上传 PyPI。
+各自冒烟测试（装进干净 venv 跑 `sap-odata --version` 和 `--help`）→
+汇总上传 PyPI。
 
 `--skip-existing` 让重跑幂等：某个平台失败时修好重推 tag，已传的不会冲突。
+
+### 4.1.1 只构建、不发布（先凑齐四份 wheel）
+
+不想立刻发 PyPI，只想拿到四个平台的包：仓库 Actions →
+`Release to PyPI` → **Run workflow**，`publish` 保持不勾选。
+
+跑完在该次 run 的页面底部 **Artifacts** 里能下到四个压缩包：
+
+```
+wheels-x86_64-pc-windows-msvc.zip
+wheels-x86_64-unknown-linux-gnu.zip
+wheels-aarch64-apple-darwin.zip
+wheels-x86_64-apple-darwin.zip
+```
+
+四份解压到同一个 `dist/` 就是完整的发布集，可手工 `twine upload`
+或留着等下次推 tag 一起发。
+
+> `publish` 勾上则需要仓库已配好 `pypi` environment 和 trusted publisher，
+> 否则 publish job 会被跳过或校验失败。
 
 ### 4.2 本地发布（仅调试用）
 
@@ -206,32 +241,38 @@ python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*.w
 
 ## 5. 已知限制
 
-### 5.1 Linux/macOS 上系统钥匙串不可用
+### 5.1 系统钥匙串：按平台挂不同的 backend
 
-`crates/core` 依赖 `keyring`，而 workspace 里只启用了 `windows-native` feature：
+`keyring` 3.x **没有默认 backend feature**。一个都不开时它会编译进
+`mock` 存储——`set_password` 返回成功，密码却只存在 `Entry` 对象里，
+进程一退出就没了。所以不能只在 workspace 里写 `windows-native`。
+
+现在的接法（`crates/core/Cargo.toml`，按 target 分别声明）：
+
+| 平台 | feature | 实际后端 |
+|---|---|---|
+| Windows | `windows-native` | 凭据管理器 |
+| macOS | `apple-native` | Keychain |
+| Linux | `linux-native` | 内核 keyutils |
+| 其他 unix | 无 | `mock`（仅保证能编译运行） |
+
+Linux 选 `linux-native` 是为了构建可靠：纯 syscall，不需要 libdbus，
+manylinux 容器里一定能编过。代价是凭据存在**登录会话**里，注销或重启后
+需要重新输入密码。
+
+想要跨重启持久化，换成 Secret Service：
 
 ```toml
-keyring = { version = "3", features = ["windows-native"] }
-```
-
-后果：非 Windows 平台**能编译、能装、命令能跑**，但保存 SAP 凭据到系统
-钥匙串会失败（keyring 找不到可用 backend）。
-
-修法（按平台条件启用）：
-
-```toml
-[target.'cfg(windows)'.dependencies]
-keyring = { version = "3", features = ["windows-native"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-keyring = { version = "3", features = ["apple-native"] }
-
 [target.'cfg(target_os = "linux")'.dependencies]
-keyring = { version = "3", features = ["sync-secret-service"] }
+keyring = { version = "3", features = ["sync-secret-service", "crypto-rust"] }
 ```
 
-这不是打包问题，是功能完整性问题。如果首发只面向 Windows 用户，
-可以暂时只发 Windows wheel，等其他平台验证过再补。
+代价是构建时要能链上 libdbus（`dbus-secret-service` 加 `vendored`
+feature 可静态编译），且运行时要有一个可用的 D-Bus 会话（GNOME Keyring /
+KWallet）。无头服务器、容器里通常没有，会退化成报错。
+
+判断是否踩了 mock 坑：在目标机上跑 `profile add` 存密码，然后**另开一个
+进程**跑 `services`。如果又提示要密码，就是这个 feature 没配对。
 
 ### 5.2 体积
 
@@ -242,6 +283,40 @@ CI 的 `--release` 已开 `strip = true`。
 
 `requires-python = ">=3.8"`。虽然二进制与 Python 版本无关，但 pip 需要这个
 下限才能选 wheel。若目标用户可能用更老的 Python，改这一行即可，不必重新编译。
+
+### 5.4 装完敲 `sap-odata` 提示"不是内部或外部命令"
+
+`pip install` 把 exe 放进 **user Scripts** 目录，而这个目录通常不在 PATH 里。
+
+常见位置：
+
+| Python 来源 | user Scripts 路径 |
+|---|---|
+| Microsoft Store | `%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\Scripts` |
+| python.org 安装包 | `%APPDATA%\Python\Python313\Scripts` |
+
+查实际路径（任何环境都准）：
+
+```powershell
+python -c "import site,os; print(os.path.join(site.USER_BASE,'Scripts'))"
+```
+
+把它加进**用户级** PATH：
+
+```powershell
+$s   = python -c "import site,os; print(os.path.join(site.USER_BASE,'Scripts'))"
+$old = [Environment]::GetEnvironmentVariable('Path','User')
+[Environment]::SetEnvironmentVariable('Path', "$old;$s", 'User')
+```
+
+重开终端生效。
+
+> **不要用 `setx PATH "%PATH%;..."`**——它会把系统 PATH 一并并入用户变量，
+> 造成重复条目并可能撑爆 1024 字符上限，之后排查起来很麻烦。
+
+不想动 PATH 的话，直接用全路径调用，或者改用 `pipx install sap-odata-cli`
+（pipx 会自己处理隔离环境和入口）。
+
 
 ---
 

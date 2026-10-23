@@ -4,7 +4,11 @@
 # Locates maturin automatically so it does not need to be on PATH.
 # Usage:  ./scripts/build-wheel.ps1
 #
-# Output: target/wheels/sap_odata_cli-<version>-py3-none-<platform>.whl
+# Output: dist/sap_odata_cli-<version>-py3-none-<platform>.whl
+#
+# Only the wheel for the platform you run this on can be produced locally.
+# For the full matrix (Windows / Linux / macOS arm64 / macOS x64) run the
+# `Release to PyPI` workflow on GitHub — see docs/PYPI.md.
 
 $ErrorActionPreference = 'Stop'
 
@@ -37,14 +41,16 @@ if (-not $maturin) {
 
 Write-Host "Using maturin: $maturin" -ForegroundColor DarkGray
 
-& $maturin build --release --out target/wheels
+# --locked: fail instead of silently resolving different dependency versions
+# than Cargo.lock, so the wheel matches what CI produces.
+& $maturin build --release --locked --out dist
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host 'Build failed.' -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-$wheel = Get-ChildItem target/wheels/*.whl | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$wheel = Get-ChildItem dist/*.whl | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 Write-Host ''
 Write-Host "Built: $($wheel.FullName)" -ForegroundColor Green
 Write-Host ''
