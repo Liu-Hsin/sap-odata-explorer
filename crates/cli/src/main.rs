@@ -65,6 +65,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// 输出内置的 AI agent skill 文档
+    Skill,
+
     /// 通过交互式向导添加 SAP 系统
     Setup,
 
@@ -506,6 +509,11 @@ enum AliasAction {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    if matches!(&cli.command, Commands::Skill) {
+        print!("{}", include_str!("../../../skills/sap-odata-cli/SKILL.md"));
+        return Ok(());
+    }
+
     let log_level = if cli.verbose {
         "sap_odata=debug"
     } else {
@@ -622,6 +630,7 @@ async fn main() -> Result<()> {
         match &cli.command {
             Commands::Profile { .. }
             | Commands::Alias { .. }
+            | Commands::Skill
             | Commands::Setup
             | Commands::Signout { .. } => unreachable!(),
             Commands::Services {

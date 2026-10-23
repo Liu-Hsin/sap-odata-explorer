@@ -230,7 +230,9 @@ data, clean stdout (banners, logs and HTTP traces go to stderr), meaningful exit
 strictly read-only SAP surface. [`skills/sap-odata-cli/SKILL.md`](skills/sap-odata-cli/SKILL.md)
 is a ready-made skill that teaches a coding agent the safe workflows —
 discovery, describe, queries, lint, offline EDMX — plus the failure
-playbook (SSO expiry, keyring states, unpublished V4 catalogs).
+playbook (SSO expiry, keyring states, unpublished V4 catalogs). The CLI
+embeds this file into the executable; run `sap-odata skill` to print it, or
+`sap-odata skill > SKILL.md` to export a copy without needing the repository.
 
 For [Claude Code](https://claude.com/claude-code), copy the folder into your
 skills directory:

@@ -106,6 +106,18 @@ fn closed_local_url() -> String {
 // ── stdout / stderr separation ──
 
 #[test]
+fn skill_prints_embedded_document_without_configuration() {
+    let sb = Sandbox::new("skill");
+    let out = sb.run(&["skill"]);
+    assert!(out.status.success(), "{}", stderr(&out));
+    assert_eq!(
+        stdout(&out),
+        include_str!("../../../skills/sap-odata-cli/SKILL.md")
+    );
+    assert!(stderr(&out).is_empty(), "{}", stderr(&out));
+}
+
+#[test]
 fn verbose_logs_never_reach_stdout() {
     let sb = Sandbox::new("verbose_stdout");
     let out = sb.run(&["-v", "--json", "offline", "list"]);
