@@ -22,9 +22,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kts982/sap-odata-explorer"
-Repository = "https://github.com/kts982/sap-odata-explorer"
-Issues = "https://github.com/kts982/sap-odata-explorer/issues"
+Homepage = "https://github.com/Liu-Hsin/sap-odata-explorer"
+Repository = "https://github.com/Liu-Hsin/sap-odata-explorer"
+Issues = "https://github.com/Liu-Hsin/sap-odata-explorer/issues"
+Upstream = "https://github.com/kts982/sap-odata-explorer"
 
 [tool.maturin]
 bindings = "bin"
