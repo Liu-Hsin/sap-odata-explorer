@@ -3,9 +3,20 @@
 > A focused SAP OData explorer for real systems, with catalog discovery, metadata browsing, and query tooling.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://github.com/kts982/sap-odata-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/kts982/sap-odata-explorer/actions/workflows/ci.yml)
+[![CI](https://github.com/Liu-Hsin/sap-odata-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Liu-Hsin/sap-odata-explorer/actions/workflows/ci.yml)
 [![Rust 1.88+](https://img.shields.io/badge/Rust-1.88+-orange.svg)](https://rustup.rs)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](#)
+
+> [!IMPORTANT]
+> **Unofficial fork.** This repository is a fork of
+> [kts982/sap-odata-explorer](https://github.com/kts982/sap-odata-explorer), maintained by
+> [Liu-Hsin](https://github.com/Liu-Hsin) to publish a `pip`-installable build. The original
+> project and all credit belong to Kostas T. (kts982). It is MIT-licensed and `LICENSE` is
+> unchanged.
+>
+> **The `pip` package here is `sap-odata-cli-hsin`** (it installs the `sap-odata` command).
+> The crate on crates.io, the `winget` package and the `scoop` bucket are all upstream's —
+> installing those gets you upstream's build, not this fork's.
 
 > [!TIP]
 > 📸 **Take the [visual tour in the Showcase](./docs/SHOWCASE.md) before reading further** — system setup, SAP View annotation overlay, F4 value-help picker, Fiori-readiness linter, and pre-flight validator. Screenshots before commitment.
@@ -58,7 +69,10 @@ This project is aimed at a narrower problem: understand a real SAP OData service
 
 ### Download a prebuilt binary (Windows)
 
-Go to the [Releases page](https://github.com/kts982/sap-odata-explorer/releases) and pick the latest tag. Each release attaches the following assets:
+This fork's [Releases page](https://github.com/Liu-Hsin/sap-odata-explorer/releases) carries **CLI
+wheels only** — one per platform, for `pip`. Desktop-app installers are published on the
+[upstream releases page](https://github.com/kts982/sap-odata-explorer/releases), and the table
+below describes those:
 
 | Asset | What it is | When to use |
 |---|---|---|
@@ -78,26 +92,31 @@ The CLI and the desktop app share the same `connections.toml` and Windows Creden
 **pip** (CLI, any OS — prebuilt binary, no Rust toolchain needed):
 
 ```bash
-pip install sap-odata-cli
+pip install sap-odata-cli-hsin
 # → `sap-odata` on your PATH
 ```
 
-`pip` resolves to a prebuilt, platform-specific wheel (Windows x64, Linux x64, macOS Apple Silicon and Intel) — nothing is compiled locally. If you'd rather keep the CLI isolated from your project environments, use [`pipx`](https://pipx.pypa.io/) instead: `pipx install sap-odata-cli`.
+`pip` resolves to a prebuilt, platform-specific wheel (Windows x64, Linux x64, macOS Apple Silicon and Intel) — nothing is compiled locally. If you'd rather keep the CLI isolated from your project environments, use [`pipx`](https://pipx.pypa.io/) instead: `pipx install sap-odata-cli-hsin`.
 
 **Cargo** (CLI, any OS with Rust 1.88+ — builds from source, no SmartScreen involved):
 
 ```bash
+# this fork
+cargo install --git https://github.com/Liu-Hsin/sap-odata-explorer.git sap-odata-cli
+
+# upstream release on crates.io
 cargo install sap-odata-cli
-# → `sap-odata` on your PATH
 ```
 
-**WinGet** (Windows — desktop app, MSI):
+Both produce `sap-odata`; pick one, not both.
+
+**WinGet** (upstream only — Windows, desktop app MSI):
 
 ```powershell
 winget install kts982.SAPODataExplorer
 ```
 
-**Scoop** (Windows):
+**Scoop** (upstream only — Windows):
 
 ```powershell
 scoop bucket add kts982 https://github.com/kts982/scoop-bucket
@@ -110,7 +129,7 @@ scoop install sap-odata-explorer   # Desktop app (portable)
 **Prerequisites:** Rust 1.88+ for the CLI, 1.90+ for the desktop app ([rustup.rs](https://rustup.rs)), and Node.js 20+ for the desktop app frontend build.
 
 ```bash
-git clone https://github.com/kts982/sap-odata-explorer.git
+git clone https://github.com/Liu-Hsin/sap-odata-explorer.git
 cd sap-odata-explorer
 
 # CLI only — fast

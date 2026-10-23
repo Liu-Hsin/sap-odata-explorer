@@ -1,6 +1,6 @@
 name: Release to PyPI
 
-# Builds one platform wheel per target, so `pip install sap-odata-cli`
+# Builds one platform wheel per target, so `pip install sap-odata-cli-hsin`
 # resolves to a prebuilt `sap-odata` binary on each OS. No Rust toolchain
 # required on the user's machine.
 #
@@ -126,7 +126,7 @@ jobs:
             BIN=.venv-smoke/bin/sap-odata
           fi
           "$PY" -m pip install --quiet --disable-pip-version-check dist/*.whl
-          "$PY" -m pip show sap-odata-cli | sed -n '1,3p'
+          "$PY" -m pip show sap-odata-cli-hsin | sed -n '1,3p'
           "$BIN" --version
           "$BIN" --help > /dev/null
 

@@ -93,9 +93,9 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host 'Uploaded.' -ForegroundColor Green
     if ($Target -eq 'testpypi') {
         Write-Host 'Verify install with both indexes (deps are not on TestPyPI):' -ForegroundColor DarkGray
-        Write-Host '  pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sap-odata-cli'
+        Write-Host '  pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sap-odata-cli-hsin'
     } else {
-        Write-Host 'Verify install with:  pip install sap-odata-cli' -ForegroundColor DarkGray
+        Write-Host 'Verify install with:  pip install sap-odata-cli-hsin' -ForegroundColor DarkGray
     }
 } else {
     Write-Host 'Upload failed. See the error above.' -ForegroundColor Red

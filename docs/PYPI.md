@@ -6,7 +6,7 @@
 用户侧体验：
 
 ```bash
-pip install sap-odata-cli
+pip install sap-odata-cli-hsin
 sap-odata --version        # 0.2.0
 ```
 
@@ -18,17 +18,20 @@ sap-odata --version        # 0.2.0
 
 | 项目 | 值 |
 |---|---|
-| PyPI 包名 | `sap-odata-cli` |
+| PyPI 包名 | `sap-odata-cli-hsin` |
 | 安装后命令 | `sap-odata` |
-| crates.io 包名 | `sap-odata-cli`（已发布，两者同名不冲突） |
+| crates.io 包名 | `sap-odata-cli`，**归上游 kts982 所有** |
 | 版本来源 | `Cargo.toml` 的 `workspace.package.version`（配置里是 `dynamic`） |
 
 PyPI 包名是全球唯一的，注册后不能改名、不能删除（只能 yank）。
 `pyproject.toml` 里的 `name` 就是最终包名，发布前务必确认。
 
-同一份代码同时发 crates.io 和 PyPI 是常规做法，两个生态的命名空间互不干扰。
-`pip install sap-odata-cli` 拿预编译二进制，`cargo install sap-odata-cli` 从源码编译，
-互不影响。
+**为什么带 `-hsin` 后缀**：本仓库是 `kts982/sap-odata-explorer` 的 fork，
+而 `sap-odata-cli` 这个名字在 crates.io 上属于上游作者。PyPI 上再占一个完全
+相同的名字，用户会分不清哪个是官方包，属于 PyPI 明确禁止的冒用名称风险。
+加后缀既能共存，也不影响 `sap-odata` 这个命令名。
+
+`README.md` 顶部因此加了 fork 声明，`LICENSE` 保留原作者的 MIT 版权行不能删。
 
 ---
 
@@ -82,7 +85,7 @@ Linux 包仍然依赖 glibc，具体下限看 wheel 名里的 `manylinux_*` 标�
 
 | 字段 | 值 |
 |---|---|
-| PyPI Project Name | `sap-odata-cli` |
+| PyPI Project Name | `sap-odata-cli-hsin` |
 | Owner | 实际推送的 GitHub 账号（`Cargo.toml` 里写的是 `kts982`） |
 | Repository name | `sap-odata-explorer` |
 | Workflow name | `release-pypi.yml` |
@@ -228,7 +231,7 @@ python -m twine upload --repository-url https://test.pypi.org/legacy/ `
 装包验证时必须带双索引：
 
 ```powershell
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sap-odata-cli
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sap-odata-cli-hsin
 ```
 
 想直发正式源，把地址换成 `https://upload.pypi.org/legacy/`：
@@ -322,7 +325,7 @@ $old = [Environment]::GetEnvironmentVariable('Path','User')
 > **不要用 `setx PATH "%PATH%;..."`**——它会把系统 PATH 一并并入用户变量，
 > 造成重复条目并可能撑爆 1024 字符上限，之后排查起来很麻烦。
 
-不想动 PATH 的话，直接用全路径调用，或者改用 `pipx install sap-odata-cli`
+不想动 PATH 的话，直接用全路径调用，或者改用 `pipx install sap-odata-cli-hsin`
 （pipx 会自己处理隔离环境和入口）。
 
 
@@ -335,7 +338,7 @@ $old = [Environment]::GetEnvironmentVariable('Path','User')
 ```bash
 # 全新 venv，模拟真实用户
 python -m venv /tmp/test-venv
-/tmp/test-venv/bin/pip install sap-odata-cli
+/tmp/test-venv/bin/pip install sap-odata-cli-hsin
 
 /tmp/test-venv/bin/sap-odata --version     # 应输出 0.2.0
 /tmp/test-venv/bin/sap-odata --help        # 子命令完整
@@ -344,8 +347,8 @@ python -m venv /tmp/test-venv
 which sap-odata
 
 # 卸载干净
-/tmp/test-venv/bin/pip uninstall -y sap-odata-cli
+/tmp/test-venv/bin/pip uninstall -y sap-odata-cli-hsin
 ```
 
-PyPI 页面同步检查：<https://pypi.org/project/sap-odata-cli/>
+PyPI 页面同步检查：<https://pypi.org/project/sap-odata-cli-hsin/>
 （README 渲染、分类标签、License、文件列表里的四个平台 wheel）。

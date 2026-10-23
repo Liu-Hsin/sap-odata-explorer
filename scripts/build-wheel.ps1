@@ -4,7 +4,7 @@
 # Locates maturin automatically so it does not need to be on PATH.
 # Usage:  ./scripts/build-wheel.ps1
 #
-# Output: dist/sap_odata_cli-<version>-py3-none-<platform>.whl
+# Output: dist/sap_odata_cli_hsin-<version>-py3-none-<platform>.whl
 #
 # Only the wheel for the platform you run this on can be produced locally.
 # For the full matrix (Windows / Linux / macOS arm64 / macOS x64) run the

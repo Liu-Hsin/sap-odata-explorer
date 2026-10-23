@@ -3,8 +3,8 @@ requires = ["maturin>=1.7,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "sap-odata-cli"
-description = "Command-line SAP OData explorer: service discovery, metadata browsing, queries, annotations lint, service health checks, offline EDMX"
+name = "sap-odata-cli-hsin"
+description = "Unofficial fork of the sap-odata CLI: SAP OData service discovery, metadata browsing, queries, annotations lint, service health checks, offline EDMX"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
