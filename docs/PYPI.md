@@ -40,12 +40,14 @@ PyPI 包名是全球唯一的，注册后不能改名、不能删除（只能 ya
 | 平台 | Rust target | 构建 runner | wheel 标签 |
 |---|---|---|---|
 | Windows x64 | `x86_64-pc-windows-msvc` | `windows-latest` | `py3-none-win_amd64` |
-| Linux x64 | `x86_64-unknown-linux-gnu` | `ubuntu-latest` + manylinux 容器 | `py3-none-manylinux_2_*_x86_64` |
+| Linux x64 | `x86_64-unknown-linux-gnu` | `ubuntu-latest` + manylinux_2_28 容器 | `py3-none-manylinux_2_28_x86_64` |
 | macOS Apple Silicon | `aarch64-apple-darwin` | `macos-14` | `py3-none-macosx_11_0_arm64` |
 | macOS Intel | `x86_64-apple-darwin` | `macos-14`（交叉编译） | `py3-none-macosx_10_12_x86_64` |
 
 wheel 标签是 `py3-none-<platform>`——不含 Python ABI 绑定，任何 Python 3
-版本都装同一个 wheel。
+版本都装同一个 wheel。Linux 份要求 **glibc ≥ 2.28**（RHEL 8 / Ubuntu 20.04
+起步），要兼容更老的发行版就把 `manylinux` 降回 `2014`，但那个镜像是
+CentOS 7、包源不稳定。
 
 **这四份只能在 CI 里产出。** Windows 本机能编的只有第一份：交叉编译
 Linux 需要 Docker / WSL，macOS 需要 Apple SDK，两者在 Windows 上都不成立。
@@ -61,6 +63,7 @@ Linux 需要 Docker / WSL，macOS 需要 Apple SDK，两者在 Windows 上都不
 |---|---|
 | 系统钥匙串 | `keyring` 按平台分别启用 backend（详见 5.1）。漏掉会**静默丢密码**，比报错更糟 |
 | Linux 的 OpenSSL | 用 `openssl` 的 `vendored` feature 静态链接。否则 wheel 会绑定构建机上的 `libssl.so.X`，在 RHEL 8 / Ubuntu 20.04 上直接起不来 |
+| 容器里的 perl | `openssl-src` 用 `perl ./Configure` 配置内置 OpenSSL，而 manylinux 镜像的 perl 被裁到只剩核心。工作流里用 `before-script-linux` 探测并补装 `perl-IPC-Cmd`、`perl-Time-Piece` |
 
 Linux 包仍然依赖 glibc，具体下限看 wheel 名里的 `manylinux_*` 标签。
 
