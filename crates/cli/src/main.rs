@@ -1852,7 +1852,7 @@ async fn cmd_services(
         let warnings = result
             .warnings
             .iter()
-            .map(localize_catalog_warning)
+            .map(|warning| localize_catalog_warning(warning))
             .collect::<Vec<_>>()
             .join("；");
         anyhow::bail!(

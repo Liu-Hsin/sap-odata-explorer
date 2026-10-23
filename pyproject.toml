@@ -1,0 +1,32 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "sap-odata-cli"
+description = "Command-line SAP OData explorer: service discovery, metadata browsing, queries, annotations lint, service health checks, offline EDMX"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+keywords = ["sap", "odata", "cli", "gateway", "abap"]
+dynamic = ["version"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Build Tools",
+]
+
+[project.urls]
+Homepage = "https://github.com/kts982/sap-odata-explorer"
+Repository = "https://github.com/kts982/sap-odata-explorer"
+Issues = "https://github.com/kts982/sap-odata-explorer/issues"
+
+[tool.maturin]
+bindings = "bin"
+manifest-path = "crates/cli/Cargo.toml"
+strip = true

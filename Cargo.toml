@@ -10,7 +10,7 @@ edition = "2024"
 # version. The desktop crate declares its own, higher floor.
 rust-version = "1.88"
 license = "MIT"
-repository = "https://github.com/kts982/sap-odata-explorer"
+repository = "https://github.com/Liu-Hsin/sap-odata-explorer"
 
 [workspace.dependencies]
 # `version` alongside `path`: local builds resolve via path, `cargo publish`

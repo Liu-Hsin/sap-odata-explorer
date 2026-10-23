@@ -75,6 +75,15 @@ The CLI and the desktop app share the same `connections.toml` and Windows Creden
 
 ### Package managers
 
+**pip** (CLI, any OS — prebuilt binary, no Rust toolchain needed):
+
+```bash
+pip install sap-odata-cli
+# → `sap-odata` on your PATH
+```
+
+`pip` resolves to a prebuilt, platform-specific wheel (Windows x64, Linux x64, macOS Apple Silicon and Intel) — nothing is compiled locally. If you'd rather keep the CLI isolated from your project environments, use [`pipx`](https://pipx.pypa.io/) instead: `pipx install sap-odata-cli`.
+
 **Cargo** (CLI, any OS with Rust 1.88+ — builds from source, no SmartScreen involved):
 
 ```bash
