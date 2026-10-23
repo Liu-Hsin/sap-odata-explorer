@@ -68,6 +68,10 @@ jobs:
     # Trusted Publishing: PyPI verifies the OIDC token, no API token secret
     # needed. Configure the publisher once at
     # https://pypi.org/manage/account/publishing/ (see docs/PYPI.md).
+    #
+    # Uses PyPA's official publish action rather than `maturin upload`:
+    # maturin deprecated its upload/publish commands (PyO3/maturin#2334)
+    # in favour of twine / uv, and this action handles OIDC + attestations.
     environment: pypi
     permissions:
       id-token: write
@@ -82,8 +86,9 @@ jobs:
         run: ls -la dist/
 
       - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          command: upload
-          # --skip-existing makes re-runs idempotent if one target failed.
-          args: --skip-existing --non-interactive dist/*
+          packages-dir: dist/
+          # Idempotent re-runs: a platform that already uploaded is skipped
+          # instead of failing the whole job.
+          skip-existing: true

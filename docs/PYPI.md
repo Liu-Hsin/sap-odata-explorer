@@ -84,15 +84,19 @@ GitHub 仓库的 Settings → Environments 里建一个名为 `pypi` 的环境�
 
 ```yaml
 - name: Publish to PyPI
-  uses: PyO3/maturin-action@v1
+  uses: pypa/gh-action-pypi-publish@release/v1
   with:
-    command: upload
-    args: --skip-existing --non-interactive dist/*
-  env:
-    MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+    packages-dir: dist/
+    skip-existing: true
+    password: ${{ secrets.PYPI_API_TOKEN }}
 ```
 
 并把该 job 的 `permissions: id-token: write` 去掉。
+
+> **为什么不用 `maturin upload`**：maturin 已废弃 `upload` / `publish` 命令
+> （[PyO3/maturin#2334](https://github.com/PyO3/maturin/issues/2334)），
+> 官方建议改用 `twine` 或 `uv publish`。CI 里用 PyPA 官方的
+> `gh-action-pypi-publish`，它同时处理 OIDC 和 attestations。
 
 ---
 
@@ -113,19 +117,90 @@ git push origin v0.2.0
 
 ### 4.2 本地发布（仅调试用）
 
-本地只能构建当前平台的 wheel。发到 TestPyPI 验证链路：
+本仓库带两个脚本，自动定位 maturin / twine，**不需要把它们加进 PATH**：
 
-```bash
-maturin build --release --out dist
-maturin upload --repository testpypi dist/*.whl
-pip install --index-url https://test.pypi.org/simple/ sap-odata-cli
+```powershell
+./scripts/build-wheel.ps1                                       # 构建当前平台 wheel
+./scripts/pypi-upload.ps1 -Target testpypi -Token "pypi-..."    # 先 check 再上传
 ```
 
-想直发正式源就 `maturin upload dist/*.whl`
-（需 `~/.pypirc` 或 `MATURIN_PYPI_TOKEN`）。
+- `build-wheel.ps1` 查找顺序：PATH → 本机工具目录 → `~/.cargo/bin`，
+  找不到会提示安装方式。构建完打印 wheel 全路径和本地安装命令。
+- `pypi-upload.ps1` 强制先跑 `twine check`，不通过就不上传；
+  没给 token 直接退出，不会误传。`-Target` 可选 `testpypi` / `pypi`。
+
+下面是手动步骤，脚本内部做的就是这些。
+
+---
+
+本地只能构建当前平台的 wheel。分工是：**maturin 负责 build，twine 负责 upload**
+（maturin 已废弃自带的 `upload` 命令）。
+
+```powershell
+maturin build --release --out dist
+python -m twine check dist/*.whl
+```
+
+`twine check` 必须返回 `PASSED`，它会验证元数据完整性和 README 渲染。
+没装 twine 就先 `pip install twine`。
+
+**认证只能用 API token** —— PyPI 和 TestPyPI 都已停用用户名密码，
+用真名登录会直接返回：
+
+```
+403 Username/Password authentication is no longer supported.
+```
+
+TestPyPI 与正式 PyPI 是**两套独立账号**，需分别注册：
+
+1. <https://test.pypi.org/account/register/> 注册
+2. <https://test.pypi.org/manage/account/token/> 创建 token
+   （项目首次发布前只能选 **Entire account** 范围）
+3. 复制 `pypi-...` 开头的字符串
+
+上传到 TestPyPI：
+
+```powershell
+$env:TWINE_USERNAME = "__token__"
+$env:TWINE_PASSWORD = "pypi-AgENdGVzdC5weXBpLm9yZw..."
+python -m twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+```
+
+或显式传参（便于临时切换 token）：
+
+```powershell
+python -m twine upload --repository-url https://test.pypi.org/legacy/ `
+  --username __token__ --password "pypi-AgENdGVzdC5weXBpLm9yZw..." dist/*.whl
+```
+
+四个易错点：
+
+| 症状 | 原因 |
+|---|---|
+| `403 Username/Password authentication is no longer supported` | `--username` 没写 `__token__`，或密码位填了账号密码 |
+| `403 Invalid or non-existent authentication information` | 通道对了，但 token 无效／过期／属于另一个站点（TestPyPI 和 PyPI 的 token 不通用） |
+| `405 Not Allowed` / 连接被拒 | 上传地址漏了 `legacy/` 后缀 |
+| `No matching distribution found`（安装时） | 只加了 TestPyPI 索引，依赖不在那上面 |
+
+装包验证时必须带双索引：
+
+```powershell
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sap-odata-cli
+```
+
+想直发正式源，把地址换成 `https://upload.pypi.org/legacy/`：
+
+```powershell
+$env:TWINE_PASSWORD = "pypi-..."   # 换成 pypi.org 的 token
+python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*.whl
+```
 
 > **注意**：同一个版本号上传后**不可覆盖**。改代码后必须提升版本号，
 > 否则 PyPI 直接拒绝。本地反复测试请用 TestPyPI。
+>
+> TestPyPI 会定期清理旧包，**不要把它当长期分发渠道**，它只用于验证链路。
+>
+> 用完记得 `Remove-Item Env:TWINE_PASSWORD`，别把 token 留在终端历史里。
 
 ---
 
