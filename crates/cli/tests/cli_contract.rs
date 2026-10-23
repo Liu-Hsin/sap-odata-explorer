@@ -263,10 +263,7 @@ fn global_profile_flag_on_offline_list_explains_the_clash() {
     let out = sb.run(&["-p", "DEV", "offline", "list"]);
     assert!(!out.status.success());
     let err = stderr(&out);
-    assert!(
-        err.contains("是连接配置，不是离线配置桶"),
-        "{err}"
-    );
+    assert!(err.contains("是连接配置，不是离线配置桶"), "{err}");
     assert!(
         err.contains("Imported"),
         "should list available buckets: {err}"
@@ -455,11 +452,7 @@ fn profile_add_blank_password_keeps_plaintext_password_and_insecure_tls() {
         "u",
     ]);
     assert!(out.status.success(), "{}", stderr(&out));
-    assert!(
-        stdout(&out).contains("密码未更改"),
-        "{}",
-        stdout(&out)
-    );
+    assert!(stdout(&out).contains("密码未更改"), "{}", stdout(&out));
     let p = profile_json(&sb, "ZZ_CONTRACT_PLAIN_7F3A");
     assert_eq!(p["password_source"], "plaintext", "{p}");
     assert_eq!(p["insecure_tls"], true, "{p}");
@@ -519,21 +512,13 @@ fn profile_env_is_set_kept_cleared_and_validated() {
         "Items",
     ]);
     assert!(out.status.success(), "{}", stderr(&out));
-    assert!(
-        stderr(&out).contains("生产环境（PRD）"),
-        "{}",
-        stderr(&out)
-    );
+    assert!(stderr(&out).contains("生产环境（PRD）"), "{}", stderr(&out));
     assert!(!stdout(&out).contains("PRD"), "notice must stay off stdout");
 
     // Unknown value: rejected, nothing changed.
     let out = add(&["--env", "banana"]);
     assert!(!out.status.success());
-    assert!(
-        stderr(&out).contains("未知环境"),
-        "{}",
-        stderr(&out)
-    );
+    assert!(stderr(&out).contains("未知环境"), "{}", stderr(&out));
     assert_eq!(env_of(), "PRD");
 
     assert!(add(&["--env", "none"]).status.success());

@@ -187,9 +187,7 @@ impl SapClient {
                 Ok(true)
             }
             Ok(None) => Ok(false),
-            Err(e) => Err(ODataError::AuthFailed(format!(
-                "读取已保存的会话失败：{e}"
-            ))),
+            Err(e) => Err(ODataError::AuthFailed(format!("读取已保存的会话失败：{e}"))),
         }
     }
 

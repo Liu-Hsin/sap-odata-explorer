@@ -127,8 +127,7 @@ fn stored_gzip_bytes(stored: &[u8]) -> anyhow::Result<Vec<u8>> {
             .collect();
         String::from_utf16(&units).map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?
     } else {
-        String::from_utf8(stored.to_vec())
-            .map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?
+        String::from_utf8(stored.to_vec()).map_err(|e| anyhow::anyhow!("会话数据损坏：{e}"))?
     };
     base64::engine::general_purpose::STANDARD
         .decode(text.trim())

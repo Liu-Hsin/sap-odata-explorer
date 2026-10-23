@@ -150,9 +150,7 @@ pub enum SaveError {
     /// The chosen `offline_profile_name` collides with an existing
     /// `connections` profile name. Global uniqueness across both maps
     /// is required so internal dispatch by name is unambiguous.
-    #[error(
-        "无法创建离线配置 '{name}'：同名连接配置已存在"
-    )]
+    #[error("无法创建离线配置 '{name}'：同名连接配置已存在")]
     OfflineProfileNameConflict { name: String },
 
     /// The chosen offline-profile bucket already exists *and* is
@@ -177,9 +175,7 @@ pub enum SaveError {
     /// to the same config dir, or a stale lockfile that wasn't
     /// recovered (older than `LOCK_STALE_SECONDS` triggers automatic
     /// reclaim, so reaching this means contention is real).
-    #[error(
-        "在超时时间内未能获取离线保存锁；可能有其他进程正在写入离线库，请稍后重试。"
-    )]
+    #[error("在超时时间内未能获取离线保存锁；可能有其他进程正在写入离线库，请稍后重试。")]
     LockContention,
 
     /// TOML re-serialization of the updated config failed. Shouldn't

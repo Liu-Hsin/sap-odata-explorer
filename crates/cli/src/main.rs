@@ -121,8 +121,7 @@ enum Commands {
     Functions,
 
     /// 构建并显示 OData 查询 URL（不发送请求）
-    #[command(
-        long_about = "构建并显示 OData 查询 URL，但不发送请求。\n\
+    #[command(long_about = "构建并显示 OData 查询 URL，但不发送请求。\n\
         \n\
         常用参数（`run` 命令也支持）：\n  \
             --select 字段列表       以逗号分隔的 $select 字段\n  \
@@ -134,8 +133,7 @@ enum Commands {
             --skip 数量             $skip\n  \
             --key 键值              读取单个实体：CustomerSet(K)\n  \
             --count                 请求内联计数\n  \
-            --json                  将 URL 作为 JSON 字符串输出，而不是纯文本"
-    )]
+            --json                  将 URL 作为 JSON 字符串输出，而不是纯文本")]
     Build {
         /// 实体集名称
         entity_set: String,
@@ -1014,8 +1012,8 @@ fn handle_alias_command(
     profile_name: Option<&str>,
     json: bool,
 ) -> Result<()> {
-    let profile_name = profile_name
-        .ok_or_else(|| anyhow::anyhow!("别名命令需要指定 --profile / -p"))?;
+    let profile_name =
+        profile_name.ok_or_else(|| anyhow::anyhow!("别名命令需要指定 --profile / -p"))?;
 
     match action {
         AliasAction::List => cmd_alias_list(profile_name, json),
@@ -1090,10 +1088,7 @@ fn cmd_alias_remove(profile_name: &str, alias_name: &str) -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("找不到连接配置 '{}'", profile_name))?;
 
     if profile.aliases.remove(alias_name).is_none() {
-        anyhow::bail!(
-            "连接配置 '{}' 中找不到别名 '{}'",
-            profile_name, alias_name
-        );
+        anyhow::bail!("连接配置 '{}' 中找不到别名 '{}'", profile_name, alias_name);
     }
 
     config::save_connections(&cfg, &config_dir.path)?;
@@ -1140,8 +1135,7 @@ async fn cmd_setup_wizard() -> Result<()> {
     // credential entry under a name we're about to reject. Same shared
     // helper as `cmd_profile_add` and Tauri `add_profile`.
     {
-        let (cfg_for_check, _) =
-            config::load_config().context("读取配置文件以检查名称失败")?;
+        let (cfg_for_check, _) = config::load_config().context("读取配置文件以检查名称失败")?;
         if let Err(msg) = offline::check_connected_profile_name_available(&name, &cfg_for_check) {
             anyhow::bail!("{msg}");
         }
@@ -1197,9 +1191,7 @@ async fn cmd_setup_wizard() -> Result<()> {
         1 => (String::new(), String::new(), true, false),
         2 => {
             println!();
-            println!(
-                "  Browser SSO 需要先在桌面应用或 VS Code 扩展中登录一次。"
-            );
+            println!("  Browser SSO 需要先在桌面应用或 VS Code 扩展中登录一次。");
             println!("  登录后，此 CLI 配置也可以使用——");
             println!("  会话 Cookie 将安全地保存在操作系统凭据库中。");
             println!();
@@ -1616,9 +1608,7 @@ fn cmd_profile_add(
     if let Some(old_user) = carry.orphaned_keyring_user.as_deref() {
         match config::delete_password_from_keyring(name, old_user) {
             Ok(()) => println!("  已删除旧的凭据库条目（用户：{old_user}）。"),
-            Err(e) => println!(
-                "  警告：无法删除旧的凭据库条目（用户：{old_user}）：{e}"
-            ),
+            Err(e) => println!("  警告：无法删除旧的凭据库条目（用户：{old_user}）：{e}"),
         }
     }
     let mode = if sso {
@@ -1663,10 +1653,7 @@ fn cmd_profile_remove(name: &str) -> Result<()> {
     config::save_connections(&cfg, &config_dir.path)?;
 
     if warnings.is_empty() {
-        println!(
-            "  已删除连接配置 '{}'（凭据和会话均已清除）。",
-            name
-        );
+        println!("  已删除连接配置 '{}'（凭据和会话均已清除）。", name);
     } else {
         println!(
             "  已从配置文件中删除连接配置 '{}'，但以下项目未能清除：",
@@ -1724,13 +1711,21 @@ fn cmd_profile_where(json: bool) -> Result<()> {
 
     match config::find_config_dir() {
         Some(dir) => {
-            let mode = if dir.is_portable { "便携式" } else { "用户" };
+            let mode = if dir.is_portable {
+                "便携式"
+            } else {
+                "用户"
+            };
             println!("  配置目录：{}（{}）", dir.path.display(), mode);
         }
         None => {
             // Show where it would be created
             let dir = config::get_or_create_config_dir()?;
-            let mode = if dir.is_portable { "便携式" } else { "用户" };
+            let mode = if dir.is_portable {
+                "便携式"
+            } else {
+                "用户"
+            };
             println!(
                 "  配置目录：{}（{}，首次使用时创建）",
                 dir.path.display(),
@@ -1864,10 +1859,7 @@ async fn cmd_services(
             .map(|warning| localize_catalog_warning(warning))
             .collect::<Vec<_>>()
             .join("；");
-        anyhow::bail!(
-            "无法获取服务目录：{}",
-            warnings
-        );
+        anyhow::bail!("无法获取服务目录：{}", warnings);
     }
 
     for w in &result.warnings {
@@ -2830,8 +2822,8 @@ fn cmd_offline_import(
         note,
         now_iso: current_iso8601(),
     };
-    let outcome =
-        offline::import_edmx_file(&mut cfg, &config_dir.path, opts).context("导入 EDMX 文件失败")?;
+    let outcome = offline::import_edmx_file(&mut cfg, &config_dir.path, opts)
+        .context("导入 EDMX 文件失败")?;
     if json {
         let s = serde_json::to_string_pretty(&outcome)?;
         println!("{s}");
@@ -2943,13 +2935,9 @@ fn render_offline_services(cfg: &config::ConfigFile, profile: &str, json: bool) 
         return Ok(());
     }
     let mut table = Table::new();
-    table.load_style(UTF8_FULL).set_header(vec![
-        "服务 ID",
-        "标签",
-        "版本",
-        "大小",
-        "来源",
-    ]);
+    table
+        .load_style(UTF8_FULL)
+        .set_header(vec!["服务 ID", "标签", "版本", "大小", "来源"]);
     for s in services {
         let source = s
             .source_service_path

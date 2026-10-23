@@ -306,9 +306,7 @@ pub fn save_connections(config: &ConfigFile, config_dir: &Path) -> anyhow::Resul
         .keys()
         .find(|name| on_disk.offline_profiles.contains_key(*name))
     {
-        anyhow::bail!(
-            "配置名称 '{name}' 已被离线配置桶使用，请选择其他名称"
-        );
+        anyhow::bail!("配置名称 '{name}' 已被离线配置桶使用，请选择其他名称");
     }
     on_disk.connections = config.connections.clone();
     let content = toml::to_string_pretty(&on_disk)?;
@@ -445,8 +443,8 @@ pub fn set_password_in_keyring(
     password: &str,
 ) -> anyhow::Result<()> {
     let target = format!("{KEYRING_SERVICE}:{profile_name}:{username}");
-    let entry = keyring::Entry::new(&target, username)
-        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
+    let entry =
+        keyring::Entry::new(&target, username).map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     entry
         .set_password(password)
         .map_err(|e| anyhow::anyhow!("将密码保存到凭据库失败：{e}"))?;
@@ -458,8 +456,8 @@ pub fn set_password_in_keyring(
 /// was stored in keyring vs. plaintext config.
 pub fn delete_password_from_keyring(profile_name: &str, username: &str) -> anyhow::Result<()> {
     let target = format!("{KEYRING_SERVICE}:{profile_name}:{username}");
-    let entry = keyring::Entry::new(&target, username)
-        .map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
+    let entry =
+        keyring::Entry::new(&target, username).map_err(|e| anyhow::anyhow!("凭据库错误：{e}"))?;
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),

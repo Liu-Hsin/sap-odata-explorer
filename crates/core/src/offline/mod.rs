@@ -178,9 +178,7 @@ pub enum MetadataSource {
 
 #[derive(Debug, Error)]
 pub enum NetworkNotAllowed {
-    #[error(
-        "此操作需要网络访问，但当前配置 '{profile}' 是离线缓存"
-    )]
+    #[error("此操作需要网络访问，但当前配置 '{profile}' 是离线缓存")]
     OfflineSource { profile: String },
 }
 

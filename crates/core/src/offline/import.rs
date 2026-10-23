@@ -108,19 +108,13 @@ pub enum ImportError {
     )]
     Gzipped,
 
-    #[error(
-        "文件以 HTTP 状态行或响应头开头。请删除 `<?xml` 声明之前的所有内容后重试。"
-    )]
+    #[error("文件以 HTTP 状态行或响应头开头。请删除 `<?xml` 声明之前的所有内容后重试。")]
     HttpHeadersPrefix,
 
-    #[error(
-        "文件不是有效的 UTF-8 编码。请使用 UTF-8（而非 UTF-16 或 ISO-8859-x）重新保存后重试。"
-    )]
+    #[error("文件不是有效的 UTF-8 编码。请使用 UTF-8（而非 UTF-16 或 ISO-8859-x）重新保存后重试。")]
     NotUtf8,
 
-    #[error(
-        "文件包含 OData 元数据不允许的 DOCTYPE 或 ENTITY 声明。请从源系统重新导出后重试。"
-    )]
+    #[error("文件包含 OData 元数据不允许的 DOCTYPE 或 ENTITY 声明。请从源系统重新导出后重试。")]
     DoctypeForbidden,
 
     #[error("XML 解析失败：{0}")]
@@ -136,9 +130,7 @@ pub enum ImportError {
     )]
     LooksLikeServiceDocument,
 
-    #[error(
-        "这是 OData 错误响应而非元数据。请检查服务 URL 和身份验证后重新获取。"
-    )]
+    #[error("这是 OData 错误响应而非元数据。请检查服务 URL 和身份验证后重新获取。")]
     LooksLikeODataError,
 
     #[error(
@@ -146,9 +138,7 @@ pub enum ImportError {
     )]
     NotEdmxRoot { root_name: String },
 
-    #[error(
-        "所选路径不是普通文件（目录、指向目录的符号链接及其他特殊文件不能作为 EDMX 导入）。"
-    )]
+    #[error("所选路径不是普通文件（目录、指向目录的符号链接及其他特殊文件不能作为 EDMX 导入）。")]
     NotARegularFile,
 
     #[error(
