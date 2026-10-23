@@ -133,6 +133,11 @@ git push origin v0.2.0
 
 `--skip-existing` 让重跑幂等：某个平台失败时修好重推 tag，已传的不会冲突。
 
+> **建 GitHub Release 也等于推了一次 tag。** 在网页或 API 上创建 Release 时
+> 顺手创建的标签同样会触发本流水线，并走到 publish 任务——也就是"本想发个
+> Release，结果包也上了 PyPI"。发版前给仓库的 `pypi` environment 配上
+> **required reviewers**，任何自动化发布都会先停在等人批准，这是唯一可靠的闸门。
+
 ### 4.1.1 只构建、不发布（先凑齐四份 wheel）
 
 不想立刻发 PyPI，只想拿到四个平台的包：仓库 Actions →
