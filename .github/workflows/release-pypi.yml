@@ -51,11 +51,16 @@ jobs:
             manylinux: '2_28'
             # openssl-src ships its own OpenSSL (see crates/core/Cargo.toml)
             # and configures it with `perl ./Configure`. The image's perl is
-            # minimal and lacks IPC::Cmd, which Configure requires —
-            # otherwise the build dies with "Can't locate IPC/Cmd.pm in @INC".
+            # cut down to the bare core, so the dual-life modules Configure
+            # requires are missing — first IPC::Cmd, then Time::Piece. Install
+            # whichever is absent; the probe keeps it a no-op when present.
             before_script: |
-              if ! perl -MIPC::Cmd -e1 >/dev/null 2>&1; then
-                dnf install -y perl-IPC-Cmd || yum install -y perl-IPC-Cmd
+              missing=""
+              perl -MIPC::Cmd -e1 2>/dev/null || missing="$missing perl-IPC-Cmd"
+              perl -MTime::Piece -e1 2>/dev/null || missing="$missing perl-Time-Piece"
+              if [ -n "$missing" ]; then
+                echo "installing:$missing"
+                dnf install -y $missing || yum install -y $missing
               fi
             runnable: true
           - os: macos-14
