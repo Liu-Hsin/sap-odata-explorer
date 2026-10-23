@@ -43,10 +43,20 @@ jobs:
             runnable: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            # `auto` picks a manylinux image for the Rust target so the wheel
-            # runs on older glibc distros. OpenSSL is linked statically (see
-            # crates/core/Cargo.toml), so the wheel has no libssl dependency.
-            manylinux: auto
+            # manylinux_2_28 = glibc 2.28 floor (RHEL 8+, Ubuntu 20.04+).
+            # Built on AlmaLinux 8 rather than the manylinux2014 (CentOS 7)
+            # image: CentOS 7 is past EOL and its package mirrors are
+            # unreliable, which matters because the step below installs a
+            # perl module into the container.
+            manylinux: '2_28'
+            # openssl-src ships its own OpenSSL (see crates/core/Cargo.toml)
+            # and configures it with `perl ./Configure`. The image's perl is
+            # minimal and lacks IPC::Cmd, which Configure requires —
+            # otherwise the build dies with "Can't locate IPC/Cmd.pm in @INC".
+            before_script: |
+              if ! perl -MIPC::Cmd -e1 >/dev/null 2>&1; then
+                dnf install -y perl-IPC-Cmd || yum install -y perl-IPC-Cmd
+              fi
             runnable: true
           - os: macos-14
             target: aarch64-apple-darwin
@@ -72,6 +82,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
+          before-script-linux: ${{ matrix.before_script }}
           args: --release --locked --out dist
 
       - name: Inspect wheel
